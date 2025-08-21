@@ -1,28 +1,6 @@
 import React from "react";
-
-const animals = [
-  {
-    name: "Tiger",
-    image: "/Tiger.webp",
-    description: "Majestic big cat known for its iconic stripes and agility.",
-  },
-  {
-    name: "Elephant",
-    image: "/Elephant.webp",
-    description:
-      "Gentle giant with remarkable memory and complex social bonds.",
-  },
-  {
-    name: "Hippo",
-    image: "/Hippo.webp",
-    description: "Semi-aquatic herbivore that spends most days in the water.",
-  },
-  {
-    name: "Porcupine",
-    image: "/Porcupine.webp",
-    description: "Quilled rodent that uses sharp spines as a natural defense.",
-  },
-];
+import AnimalCard from "../components/AnimalCard";
+import animals from "../data/animals";
 
 const AnimalsCatalogue = () => {
   return (
@@ -47,25 +25,14 @@ const AnimalsCatalogue = () => {
 
         {/* Grid of square cards */}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {animals.map((a) => (
-            <li
-              key={a.name}
-              className="group overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm transition hover:shadow-md"
-            >
-              <div className="aspect-square overflow-hidden bg-slate-100">
-                <img
-                  src={a.image}
-                  alt={a.name}
-                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {a.name}
-                </h3>
-                <p className="mt-1 text-sm text-slate-600">{a.description}</p>
-              </div>
+          {animals.slice(0, 4).map((a) => (
+            <li key={a.name}>
+              <AnimalCard
+                image={a.image}
+                name={a.name}
+                description={a.description}
+                aspect="square"
+              />
             </li>
           ))}
         </ul>
