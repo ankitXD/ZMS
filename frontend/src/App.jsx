@@ -12,6 +12,7 @@ import Login from "../src/pages/admin/auth/Login";
 import SignUp from "../src/pages/admin/auth/SignUp";
 import Dashboard from "../src/pages/admin/dashboard/Dashboard";
 import ViewAnimals from "../src/pages/admin/animals/ViewAnimals";
+import AddAnimals from "../src/pages/admin/animals/AddAnimals";
 import Admins from "../src/pages/admin/users/Admins";
 import ViewMessages from "../src/pages/admin/messages/ViewMessages";
 import Orders from "../src/pages/admin/orders/Orders";
@@ -54,6 +55,14 @@ const App = () => {
           element={
             <RequireAuth>
               <ViewAnimals />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="add/animals"
+          element={
+            <RequireAuth>
+              <AddAnimals />
             </RequireAuth>
           }
         />
