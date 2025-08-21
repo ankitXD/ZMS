@@ -13,6 +13,7 @@ import SignUp from "../src/pages/admin/auth/SignUp";
 import Dashboard from "../src/pages/admin/dashboard/Dashboard";
 import ViewAnimals from "../src/pages/admin/animals/ViewAnimals";
 import AddAnimals from "../src/pages/admin/animals/AddAnimals";
+import EditAnimals from "../src/pages/admin/animals/EditAnimals";
 import Admins from "../src/pages/admin/users/Admins";
 import ViewMessages from "../src/pages/admin/messages/ViewMessages";
 import Orders from "../src/pages/admin/orders/Orders";
@@ -63,6 +64,14 @@ const App = () => {
           element={
             <RequireAuth>
               <AddAnimals />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="animals/:id/edit"
+          element={
+            <RequireAuth>
+              <EditAnimals />
             </RequireAuth>
           }
         />

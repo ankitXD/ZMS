@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const ADMIN_ANIMALS_KEY = "adminAnimals";
 
@@ -17,31 +17,65 @@ const saveAnimals = (list) => {
   localStorage.setItem(ADMIN_ANIMALS_KEY, JSON.stringify(list));
 };
 
-const uuid = () =>
-  (window.crypto?.randomUUID && crypto.randomUUID()) ||
-  `ani_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+const readFileAsDataURL = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
-const AddAnimals = () => {
+const isUrl = (s) => /^https?:\/\//i.test(s);
+
+const EditAnimals = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  // Base data
+  const [loaded, setLoaded] = useState(false);
+  const [orig, setOrig] = useState(null); // original record
+
+  // Editable fields
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageData, setImageData] = useState(""); // base64 from file
+
+  // Image handling
+  const [existingImage, setExistingImage] = useState(""); // from stored record
+  const [imageUrl, setImageUrl] = useState(""); // new URL input
+  const [imageData, setImageData] = useState(""); // new uploaded base64
+  const imgSrc = useMemo(
+    () => imageData || imageUrl || existingImage,
+    [imageData, imageUrl, existingImage]
+  );
+
+  // UI state
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
-  const navigate = useNavigate();
-
-  const imgSrc = imageData || imageUrl;
-
-  const readFileAsDataURL = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+  useEffect(() => {
+    const list = loadAnimals();
+    const found = list.find((a) => a.id === id);
+    setOrig(found || null);
+    if (found) {
+      setName(found.name || "");
+      setTitle(found.title || "");
+      setCategory(found.category || "");
+      setDescription(found.description || "");
+      // Put stored image into appropriate state for preview
+      if (found.image) {
+        if (isUrl(found.image)) {
+          setExistingImage(found.image);
+        } else if (String(found.image).startsWith("data:")) {
+          setExistingImage(found.image); // keep as existing; user can replace with new upload/URL
+        } else {
+          setExistingImage(found.image);
+        }
+      }
+    }
+    setLoaded(true);
+  }, [id]);
 
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
@@ -49,19 +83,28 @@ const AddAnimals = () => {
     try {
       const dataUrl = await readFileAsDataURL(file);
       setImageData(dataUrl);
-      setImageUrl(""); // prefer uploaded file over URL
+      setImageUrl("");
+      // Keep existingImage but overridden in imgSrc by imageData
     } catch {
       alert("Could not read the selected file.");
     }
   };
 
-  const resetForm = () => {
-    setName("");
-    setTitle("");
-    setCategory("");
-    setDescription("");
-    setImageUrl("");
+  const clearImage = () => {
     setImageData("");
+    setImageUrl("");
+    setExistingImage("");
+  };
+
+  const resetToOriginal = () => {
+    if (!orig) return;
+    setName(orig.name || "");
+    setTitle(orig.title || "");
+    setCategory(orig.category || "");
+    setDescription(orig.description || "");
+    setImageData("");
+    setImageUrl("");
+    setExistingImage(orig.image || "");
     setMsg("");
   };
 
@@ -72,39 +115,65 @@ const AddAnimals = () => {
     if (!name.trim()) return setMsg("Name is required.");
     if (description.trim().length < 10)
       return setMsg("Description should be at least 10 characters.");
-    if (!imgSrc) {
-      // optional – allow missing image
-    }
 
     setSaving(true);
     await new Promise((r) => setTimeout(r, 300));
 
-    const nextAnimal = {
-      id: uuid(),
+    const list = loadAnimals();
+    const idx = list.findIndex((a) => a.id === id);
+    if (idx === -1) {
+      setSaving(false);
+      return setMsg("Animal not found. It may have been removed.");
+    }
+
+    const updated = {
+      ...list[idx],
       name: name.trim(),
       title: title.trim() || undefined,
       category: category.trim() || undefined,
       description: description.trim(),
       image: imgSrc || "",
-      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    const list = loadAnimals();
-    list.unshift(nextAnimal);
+    list[idx] = updated;
     saveAnimals(list);
 
     setSaving(false);
     navigate("/admin/dashboard/animals", { replace: true });
   };
 
+  if (!loaded) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-slate-600">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!orig) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <p className="text-slate-700">Animal not found.</p>
+        <Link
+          to="/admin/dashboard/animals"
+          className="mt-4 inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Back to Animals
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Add Animal</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Edit Animal</h1>
           <p className="text-sm text-slate-600">
-            Create a new animal entry for your zoo catalogue.
+            Update details for{" "}
+            <span className="font-medium text-slate-900">{orig.name}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -112,8 +181,16 @@ const AddAnimals = () => {
             to="/admin/dashboard/animals"
             className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            View Animals
+            Cancel
           </Link>
+          <button
+            form="edit-animal-form"
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
         </div>
       </div>
 
@@ -123,6 +200,7 @@ const AddAnimals = () => {
         <section className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">Details</h2>
           <form
+            id="edit-animal-form"
             onSubmit={handleSubmit}
             className="mt-4 grid gap-4 sm:grid-cols-2"
           >
@@ -211,7 +289,7 @@ const AddAnimals = () => {
               />
 
               {/* OR upload file */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
                   <input
                     id="file"
@@ -226,21 +304,28 @@ const AddAnimals = () => {
                   >
                     Upload Image
                   </label>
-                  <span className="ml-3 text-xs text-slate-500">
-                    or paste an image URL above
-                  </span>
                 </div>
+
+                {imgSrc && (
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    className="inline-flex items-center rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                  >
+                    Remove Image
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="sm:col-span-2 flex items-center justify-between gap-3">
               <div className="text-sm">
-                {msg && <span className="text-emerald-700">{msg}</span>}
+                {msg && <span className="text-rose-700">{msg}</span>}
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={resetForm}
+                  onClick={resetToOriginal}
                   className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
                   Reset
@@ -250,7 +335,7 @@ const AddAnimals = () => {
                   disabled={saving}
                   className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : "Add Animal"}
+                  {saving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </div>
@@ -292,14 +377,10 @@ const AddAnimals = () => {
               )}
             </div>
           </div>
-
-          <p className="mt-3 text-xs text-slate-500">
-            Tip: Ensure images are square or center-cropped for best results.
-          </p>
         </aside>
       </div>
     </div>
   );
 };
 
-export default AddAnimals;
+export default EditAnimals;

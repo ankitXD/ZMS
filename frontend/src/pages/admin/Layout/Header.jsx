@@ -1,9 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Header = ({ onToggleSidebar }) => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const onClickAway = (e) => {
+      if (!menuOpen) return;
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    const onEsc = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onClickAway);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onClickAway);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [menuOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
@@ -108,7 +127,7 @@ const Header = ({ onToggleSidebar }) => {
               Add Animal
             </Link>
 
-            <button
+            {/* <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
               aria-label="Notifications"
@@ -127,9 +146,9 @@ const Header = ({ onToggleSidebar }) => {
                   d="M14 10V7a4 4 0 1 0-8 0v3a6 6 0 0 1-2 4.58L3 16h14l-1-1.42A6 6 0 0 1 14 10Zm-7 6a3 3 0 0 0 6 0"
                 />
               </svg>
-            </button>
+            </button> */}
 
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
@@ -151,14 +170,18 @@ const Header = ({ onToggleSidebar }) => {
                   role="menu"
                 >
                   <Link
-                    to="/admin/settings"
+                    to="/admin/dashboard/settings"
+                    onClick={() => setMenuOpen(false)}
                     className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                     role="menuitem"
                   >
                     Settings
                   </Link>
                   <button
-                    onClick={handleLogout}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      handleLogout();
+                    }}
                     className="block w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                     role="menuitem"
                   >
