@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -24,36 +25,45 @@ const Navbar = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Brand */}
-          <a
-            href="/"
+          <Link
+            to="/"
             className="flex items-center gap-2 font-extrabold text-slate-900"
           >
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-sky-500 text-white shadow-md">
               <span className="text-lg">🐾</span>
             </span>
             <span className="text-lg tracking-tight">Zoo Verse</span>
-          </a>
+          </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-2">
-            <a className={`${linkBase} ${linkVariant.default}`} href="/">
+            <Link className={`${linkBase} ${linkVariant.default}`} to="/">
               Home
-            </a>
-            <a className={`${linkBase} ${linkVariant.default}`} href="/about">
+            </Link>
+            <Link className={`${linkBase} ${linkVariant.default}`} to="/about">
               About
-            </a>
-            <a className={`${linkBase} ${linkVariant.default}`} href="/contact">
+            </Link>
+            <Link
+              className={`${linkBase} ${linkVariant.default}`}
+              to="/contact"
+            >
               Contact
-            </a>
-            <a className={`${linkBase} ${linkVariant.default}`} href="/animals">
+            </Link>
+            <Link
+              className={`${linkBase} ${linkVariant.default}`}
+              to="/animals"
+            >
               Animals
-            </a>
-            <a className={`${linkBase} ${linkVariant.primary}`} href="/tickets">
+            </Link>
+            <Link
+              className={`${linkBase} ${linkVariant.primary}`}
+              to="/tickets"
+            >
               Book Tickets
-            </a>
-            <a className={`${linkBase} ${linkVariant.admin}`} href="/login">
+            </Link>
+            <Link className={`${linkBase} ${linkVariant.admin}`} to="/login">
               Admin
-            </a>
+            </Link>
           </nav>
 
           {/* Mobile toggle */}
@@ -102,48 +112,48 @@ const Navbar = () => {
         {open && (
           <nav className="md:hidden pb-4">
             <div className="mt-2 grid gap-2">
-              <a
+              <Link
                 className={`${linkBase} ${linkVariant.default} justify-center`}
-                href="/"
+                to="/"
                 onClick={() => setOpen(false)}
               >
                 Home
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`${linkBase} ${linkVariant.default} justify-center`}
-                href="/about"
+                to="/about"
                 onClick={() => setOpen(false)}
               >
                 About
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`${linkBase} ${linkVariant.default} justify-center`}
-                href="/contact"
+                to="/contact"
                 onClick={() => setOpen(false)}
               >
                 Contact
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`${linkBase} ${linkVariant.default} justify-center`}
-                href="/animals"
+                to="/animals"
                 onClick={() => setOpen(false)}
               >
                 Animals
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`${linkBase} ${linkVariant.primary} justify-center`}
-                href="/tickets"
+                to="/tickets"
                 onClick={() => setOpen(false)}
               >
                 Book Tickets
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`${linkBase} ${linkVariant.admin} justify-center`}
-                href="/login"
+                to="/login"
                 onClick={() => setOpen(false)}
               >
                 Admin
-              </a>
+              </Link>
             </div>
           </nav>
         )}
