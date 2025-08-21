@@ -6,6 +6,7 @@ import AboutUs from "../src/pages/AboutUs";
 import Contact from "../src/pages/Contact";
 import Animals from "../src/pages/Animals";
 import BookTickets from "../src/pages/BookTickets";
+import AnimalDetail from "./pages/AnimalDetail";
 
 import AdminLayout from "../src/pages/admin/Layout/AdminLayout";
 import Login from "../src/pages/admin/auth/Login";
@@ -116,6 +117,7 @@ const App = () => {
           }
         />
       </Route>
+      <Route path="/animals/:slug" element={<AnimalDetail />} />
     </Routes>
   );
 };

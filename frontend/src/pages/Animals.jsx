@@ -1,6 +1,13 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import AnimalCard from "../components/AnimalCard";
 import animals from "../data/animals";
+
+const slugify = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
 
 const Animals = () => {
   return (
@@ -22,25 +29,30 @@ const Animals = () => {
         </header>
 
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {animals.map((a) => (
-            <li key={a.name}>
-              <AnimalCard
-                image={a.image}
-                name={a.name}
-                description={a.description}
-                aspect="square"
-              />
-            </li>
-          ))}
+          {animals.map((a) => {
+            const slug = a.slug || slugify(a.name);
+            return (
+              <li key={a.name}>
+                <Link to={`/animals/${slug}`} className="block">
+                  <AnimalCard
+                    image={a.image}
+                    name={a.name}
+                    description={a.description}
+                    aspect="square"
+                  />
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="mt-8 flex justify-center">
-          <a
-            href="/tickets"
+          <Link
+            to="/tickets"
             className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
           >
             Book Tickets
-          </a>
+          </Link>
         </div>
       </div>
     </section>
