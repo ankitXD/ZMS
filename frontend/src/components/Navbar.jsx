@@ -51,7 +51,7 @@ const Navbar = () => {
             <a className={`${linkBase} ${linkVariant.primary}`} href="/tickets">
               Book Tickets
             </a>
-            <a className={`${linkBase} ${linkVariant.admin}`} href="/admin">
+            <a className={`${linkBase} ${linkVariant.admin}`} href="/login">
               Admin
             </a>
           </nav>
@@ -139,7 +139,7 @@ const Navbar = () => {
               </a>
               <a
                 className={`${linkBase} ${linkVariant.admin} justify-center`}
-                href="/admin"
+                href="/login"
                 onClick={() => setOpen(false)}
               >
                 Admin

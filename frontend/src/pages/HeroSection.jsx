@@ -3,7 +3,7 @@ import React from "react";
 const HeroSection = () => {
   return (
     <section
-      className="relative h-[60vh] md:h-[70vh] lg:h-[75vh] overflow-hidden"
+      className="relative h-[60vh] md:h-[70vh] lg:h-[85vh] overflow-hidden"
       aria-label="Welcome to Zoo Verse"
     >
       {/* Background image */}
