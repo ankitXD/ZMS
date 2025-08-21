@@ -7,6 +7,9 @@ import Contact from "../src/pages/Contact";
 import Animals from "../src/pages/Animals";
 import BookTickets from "../src/pages/BookTickets";
 import AnimalDetail from "./pages/AnimalDetail";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import ScrollToTop, { BackToTopButton } from "./components/ScrollToTop";
 
 import AdminLayout from "../src/pages/admin/Layout/AdminLayout";
 import Login from "../src/pages/admin/auth/Login";
@@ -23,112 +26,120 @@ import ViewReports from "../src/pages/admin/reports/ViewReports";
 import Settings from "../src/pages/admin/settings/Settings";
 import RequireAuth from "../src/pages/admin/Layout/RequireAuth";
 
-const App = () => {
+function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<LandingPage />} />
-        <Route path="about" element={<AboutUs />} />
-        <Route path="contact" element={<Contact />} />
-        <Route path="animals" element={<Animals />} />
-        <Route path="tickets" element={<BookTickets />} />
-      </Route>
+    <>
+      {/* Must be inside Router context */}
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<LandingPage />} />
+          <Route path="about" element={<AboutUs />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="animals" element={<Animals />} />
+          <Route path="tickets" element={<BookTickets />} />
+          <Route path="terms" element={<Terms />} />
+          <Route path="privacy" element={<Privacy />} />
+        </Route>
 
-      <Route path="login" element={<Login />} />
-      <Route path="signup" element={<SignUp />} />
-      <Route path="/" element={<Navigate to="/dashboard" />} />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <RequireAuth>
-            <AdminLayout />
-          </RequireAuth>
-        }
-      >
+        <Route path="login" element={<Login />} />
+        <Route path="signup" element={<SignUp />} />
+        <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route
-          index
+          path="/admin/dashboard"
           element={
             <RequireAuth>
-              <Dashboard />
+              <AdminLayout />
             </RequireAuth>
           }
-        />
-        <Route
-          path="animals"
-          element={
-            <RequireAuth>
-              <ViewAnimals />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="add/animals"
-          element={
-            <RequireAuth>
-              <AddAnimals />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="animals/:id/edit"
-          element={
-            <RequireAuth>
-              <EditAnimals />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="admins"
-          element={
-            <RequireAuth>
-              <Admins />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="messages"
-          element={
-            <RequireAuth>
-              <ViewMessages />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="orders"
-          element={
-            <RequireAuth>
-              <Orders />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="payments"
-          element={
-            <RequireAuth>
-              <Payments />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="reports"
-          element={
-            <RequireAuth>
-              <ViewReports />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="settings"
-          element={
-            <RequireAuth>
-              <Settings />
-            </RequireAuth>
-          }
-        />
-      </Route>
-      <Route path="/animals/:slug" element={<AnimalDetail />} />
-    </Routes>
+        >
+          <Route
+            index
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="animals"
+            element={
+              <RequireAuth>
+                <ViewAnimals />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="add/animals"
+            element={
+              <RequireAuth>
+                <AddAnimals />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="animals/:id/edit"
+            element={
+              <RequireAuth>
+                <EditAnimals />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="admins"
+            element={
+              <RequireAuth>
+                <Admins />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="messages"
+            element={
+              <RequireAuth>
+                <ViewMessages />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <RequireAuth>
+                <Orders />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="payments"
+            element={
+              <RequireAuth>
+                <Payments />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="reports"
+            element={
+              <RequireAuth>
+                <ViewReports />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RequireAuth>
+                <Settings />
+              </RequireAuth>
+            }
+          />
+        </Route>
+        <Route path="/animals/:slug" element={<AnimalDetail />} />
+      </Routes>
+      {/* Place near the end so it overlays content */}
+      <BackToTopButton />
+    </>
   );
-};
+}
 
 export default App;

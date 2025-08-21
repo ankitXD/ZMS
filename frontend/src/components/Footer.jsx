@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const year = new Date().getFullYear();
@@ -18,20 +19,20 @@ const Footer = () => {
         <div className="py-10 grid gap-10 md:grid-cols-4">
           {/* Brand */}
           <div>
-            <a
-              href="/"
+            <Link
+              to="/"
               className="flex items-center gap-2 font-extrabold text-slate-900"
             >
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-sky-500 text-white shadow-md">
                 <span className="text-lg">🐾</span>
               </span>
               <span className="text-lg tracking-tight">Zoo Verse</span>
-            </a>
+            </Link>
             <p className="mt-3 text-sm text-slate-600">
               Connecting you with wildlife, responsibly.
             </p>
 
-            {/* Social */}
+            {/* Social (external) */}
             <div className="mt-4 flex items-center gap-2">
               <a
                 href="#"
@@ -103,49 +104,49 @@ const Footer = () => {
             </h3>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <a className="text-slate-600 hover:text-slate-900" href="/">
+                <Link className="text-slate-600 hover:text-slate-900" to="/">
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className="text-slate-600 hover:text-slate-900"
-                  href="/about"
+                  to="/about"
                 >
                   About
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className="text-slate-600 hover:text-slate-900"
-                  href="/animals"
+                  to="/animals"
                 >
                   Animals
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className="text-slate-600 hover:text-slate-900"
-                  href="/tickets"
+                  to="/tickets"
                 >
                   Book Tickets
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className="text-slate-600 hover:text-slate-900"
-                  href="/contact"
+                  to="/contact"
                 >
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className="text-slate-600 hover:text-slate-900"
-                  href="/admin"
+                  to="/login"
                 >
                   Admin
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -205,12 +206,12 @@ const Footer = () => {
         <div className="border-t border-slate-200 py-4 text-sm text-slate-600 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p>© {year} Zoo Verse. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-slate-900">
+            <Link to="/privacy" className="hover:text-slate-900">
               Privacy
-            </a>
-            <a href="#" className="hover:text-slate-900">
+            </Link>
+            <Link to="/terms" className="hover:text-slate-900">
               Terms
-            </a>
+            </Link>
           </div>
         </div>
       </div>

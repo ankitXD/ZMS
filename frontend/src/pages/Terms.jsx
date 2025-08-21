@@ -1,11 +1,261 @@
-import React from 'react'
+import React from "react";
+import { Link } from "react-router-dom";
 
 const Terms = () => {
-  return (
-    <div>
-      
-    </div>
-  )
-}
+  const updatedOn = "August 21, 2025";
 
-export default Terms
+  return (
+    <section className="relative" aria-label="Terms and Conditions">
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-white via-emerald-50 to-emerald-100"
+        aria-hidden="true"
+      />
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
+        <header className="mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            Terms and Conditions
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Last updated: {updatedOn}
+          </p>
+        </header>
+
+        <div className="space-y-8">
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="acceptance"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              1. Acceptance of Terms
+            </h2>
+            <p className="mt-3 text-slate-700">
+              By accessing or using Zoo Verse (“we”, “us”, “our”) websites and
+              services, you agree to be bound by these Terms and all applicable
+              laws. If you do not agree, do not use the services.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="accounts"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              2. Accounts and Eligibility
+            </h2>
+            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-700">
+              <li>
+                You must provide accurate, complete information when creating an
+                account.
+              </li>
+              <li>
+                You are responsible for maintaining the confidentiality of your
+                credentials.
+              </li>
+              <li>
+                You must be able to form a binding contract under applicable
+                law.
+              </li>
+            </ul>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="tickets"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              3. Tickets, Pricing, and Payments
+            </h2>
+            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-700">
+              <li>
+                Ticket prices, fees, and taxes are shown at checkout and may
+                change without notice.
+              </li>
+              <li>
+                Orders are subject to availability and confirmation of payment.
+              </li>
+              <li>
+                You authorize us or our payment processors to charge your
+                selected method.
+              </li>
+            </ul>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="cancellations"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              4. Cancellations and Refunds
+            </h2>
+            <p className="mt-3 text-slate-700">
+              Cancellation and refund eligibility depend on ticket type and
+              local policies. Certain tickets may be non‑refundable. For
+              eligible cases, refunds are returned to the original payment
+              method within a reasonable period.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="use"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              5. Acceptable Use
+            </h2>
+            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-700">
+              <li>No unlawful, harmful, or fraudulent activity.</li>
+              <li>
+                No interference with the security or operation of the services.
+              </li>
+              <li>
+                No scraping, reverse engineering, or misuse of content or data.
+              </li>
+            </ul>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="ip"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              6. Intellectual Property
+            </h2>
+            <p className="mt-3 text-slate-700">
+              All site content, trademarks, and materials are owned by Zoo Verse
+              or its licensors and protected by applicable laws. You may not use
+              them without prior written consent except as permitted by law.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="third-parties"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              7. Third‑Party Services
+            </h2>
+            <p className="mt-3 text-slate-700">
+              Our services may link to third‑party sites or use third‑party
+              processors. We are not responsible for their content or practices.
+              Your use of third‑party services is at your own risk and subject
+              to their terms.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="disclaimer"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              8. Disclaimers
+            </h2>
+            <p className="mt-3 text-slate-700">
+              Services are provided “as is” and “as available” without
+              warranties of any kind, express or implied, to the fullest extent
+              permitted by law.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="liability"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              9. Limitation of Liability
+            </h2>
+            <p className="mt-3 text-slate-700">
+              To the maximum extent permitted by law, Zoo Verse shall not be
+              liable for indirect, incidental, special, consequential, or
+              punitive damages, or any loss of profits, revenue, data, or use
+              arising from your use of the services.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="indemnity"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              10. Indemnification
+            </h2>
+            <p className="mt-3 text-slate-700">
+              You agree to defend, indemnify, and hold harmless Zoo Verse and
+              its affiliates from any claims, damages, liabilities, costs, and
+              expenses arising from your use of the services or breach of these
+              Terms.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="law"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              11. Governing Law
+            </h2>
+            <p className="mt-3 text-slate-700">
+              These Terms are governed by applicable local laws without regard
+              to conflict‑of‑laws principles. Venue and jurisdiction will lie in
+              the competent courts of that locality.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="changes"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              12. Changes to These Terms
+            </h2>
+            <p className="mt-3 text-slate-700">
+              We may update these Terms from time to time. The “Last updated”
+              date reflects the most recent changes. Your continued use after
+              changes become effective constitutes acceptance of the updated
+              Terms.
+            </p>
+          </section>
+
+          <section
+            className="rounded-xl border border-slate-200 bg-white p-6"
+            id="contact"
+          >
+            <h2 className="text-xl font-semibold text-slate-900">
+              13. Contact Us
+            </h2>
+            <p className="mt-3 text-slate-700">
+              Questions about these Terms? Visit our{" "}
+              <Link to="/contact" className="text-sky-700 hover:underline">
+                Contact
+              </Link>{" "}
+              page or email{" "}
+              <a
+                href="mailto:hello@zooverse.example"
+                className="text-sky-700 hover:underline"
+              >
+                hello@zooverse.example
+              </a>
+              .
+            </p>
+          </section>
+
+          <div className="flex items-center justify-between">
+            <Link
+              to="/"
+              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              ← Back to Home
+            </Link>
+            <Link
+              to="/privacy"
+              className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              View Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Terms;
