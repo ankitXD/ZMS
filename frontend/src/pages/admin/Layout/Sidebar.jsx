@@ -148,7 +148,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-30 w-72 transform border-r border-slate-200 bg-white p-3 transition-transform duration-200 ease-in-out ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      className={`fixed inset-y-0 left-0 z-30 w-48 transform border-r border-slate-200 bg-white p-3 transition-transform duration-200 ease-in-out ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
       {/* Brand (small) */}
       <div className="flex items-center gap-2 px-2 py-3">
