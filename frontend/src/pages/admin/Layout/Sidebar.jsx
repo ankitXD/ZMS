@@ -97,6 +97,26 @@ const navItems = [
       </svg>
     ),
   },
+  // Reports
+  {
+    to: "/admin/dashboard/reports",
+    label: "Reports",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M4 19h16M6 17V7m6 10V5m6 12v-8"
+        />
+      </svg>
+    ),
+  },
   {
     to: "/admin/dashboard/settings",
     label: "Settings",

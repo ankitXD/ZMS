@@ -19,6 +19,7 @@ import Admins from "../src/pages/admin/users/Admins";
 import ViewMessages from "../src/pages/admin/messages/ViewMessages";
 import Orders from "../src/pages/admin/orders/Orders";
 import Payments from "../src/pages/admin/payments/Payments";
+import ViewReports from "../src/pages/admin/reports/ViewReports";
 import Settings from "../src/pages/admin/settings/Settings";
 import RequireAuth from "../src/pages/admin/Layout/RequireAuth";
 
@@ -105,6 +106,14 @@ const App = () => {
           element={
             <RequireAuth>
               <Payments />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="reports"
+          element={
+            <RequireAuth>
+              <ViewReports />
             </RequireAuth>
           }
         />
