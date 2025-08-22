@@ -75,14 +75,7 @@ async function generateTicketsForOrder(order) {
 
 // POST /api/orders
 export const createOrder = asyncHandler(async (req, res) => {
-  const {
-    customer,
-    contact,
-    items,
-    // status is forced to "pending" for public creates
-    paymentMethod,
-    currency = "INR",
-  } = req.body || {};
+  const { contact, items, paymentMethod, currency = "INR" } = req.body || {};
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     throw new ApiError(400, "At least one ticket item is required");
@@ -94,26 +87,18 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   const { items: normalized, totalAmount } = normalizeItems(items);
-
   const order = await Order.create({
-    customer:
-      customer && mongoose.isValidObjectId(customer) ? customer : undefined,
-    contact:
-      contact && typeof contact === "object"
-        ? {
-            name: contact.name?.trim(),
-            email: contact.email?.trim()?.toLowerCase(),
-            phone: contact.phone?.trim(),
-          }
-        : undefined,
+    contact: {
+      name: contact.name?.trim(),
+      email: contact.email?.trim()?.toLowerCase(),
+      phone: contact.phone?.trim(),
+    },
     items: normalized,
     totalAmount,
     currency,
-    status: "pending", // force pending; set to paid after payment confirmation
+    status: "pending",
     paymentMethod: paymentMethod?.trim(),
   });
-
-  // Public create does NOT issue QR codes. They are generated after payment.
   return res
     .status(201)
     .json(new ApiResponse(201, { order }, "Order created (pending payment)"));
@@ -168,8 +153,7 @@ export const getOrders = asyncHandler(async (req, res) => {
     Order.find(filter)
       .sort(sort)
       .skip((pageNum - 1) * perPage)
-      .limit(perPage)
-      .populate("customer", "name email"),
+      .limit(perPage),
   ]);
 
   return res.status(200).json(
@@ -187,11 +171,7 @@ export const getOrders = asyncHandler(async (req, res) => {
 
 // GET /api/orders/:id
 export const getOrder = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  if (!mongoose.isValidObjectId(id))
-    throw new ApiError(400, "Invalid order id");
-
-  const order = await Order.findById(id).populate("customer", "name email");
+  const order = await Order.findById(req.params.id); // no populate
   if (!order) throw new ApiError(404, "Order not found");
 
   return res.status(200).json(new ApiResponse(200, order));
@@ -263,58 +243,31 @@ export const deleteOrder = asyncHandler(async (req, res) => {
 
 // PATCH /api/orders/:id/status
 export const updateOrderStatus = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body || {};
-  if (!mongoose.isValidObjectId(id))
-    throw new ApiError(400, "Invalid order id");
-  if (!status) throw new ApiError(400, "Status is required");
-
-  const order = await Order.findByIdAndUpdate(
-    id,
-    { $set: { status: String(status).trim() } },
+  const updated = await Order.findByIdAndUpdate(
+    req.params.id,
+    { $set: { status: String(req.body.status).trim() } },
     { new: true, runValidators: true },
   );
-  if (!order) throw new ApiError(404, "Order not found");
+  if (!updated) throw new ApiError(404, "Order not found");
 
   let qrCodes = [];
   if (
-    order.status === "paid" &&
-    (!order.tickets || order.tickets.length === 0)
+    updated.status === "paid" &&
+    (!updated.tickets || updated.tickets.length === 0)
   ) {
-    qrCodes = await generateTicketsForOrder(order);
+    qrCodes = await generateTicketsForOrder(updated);
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { order, qrCodes }, "Order status updated"));
+    .json(
+      new ApiResponse(200, { order: updated, qrCodes }, "Order status updated"),
+    );
 });
 
 // GET /api/orders/table
 export const getOrdersTable = asyncHandler(async (_req, res) => {
   const rows = await Order.aggregate([
-    {
-      $lookup: {
-        from: "customers",
-        localField: "customer",
-        foreignField: "_id",
-        as: "customer",
-        pipeline: [{ $project: { name: 1, email: 1 } }],
-      },
-    },
-    { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
-    {
-      $lookup: {
-        from: "payments",
-        let: { orderId: "$_id" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$order", "$$orderId"] } } },
-          { $sort: { paidAt: -1, createdAt: -1 } },
-          { $limit: 1 },
-          { $project: { method: 1 } },
-        ],
-        as: "lastPayment",
-      },
-    },
     {
       $addFields: {
         tickets: {
@@ -326,15 +279,6 @@ export const getOrdersTable = asyncHandler(async (_req, res) => {
             },
           },
         },
-        paymentMethod: {
-          $let: {
-            vars: { lp: { $first: "$lastPayment" } },
-            in: { $ifNull: ["$$lp.method", "$paymentMethod"] },
-          },
-        },
-        // Fallback to contact fields if no Customer
-        customerName: { $ifNull: ["$customer.name", "$contact.name"] },
-        customerEmail: { $ifNull: ["$customer.email", "$contact.email"] },
       },
     },
     {
@@ -342,8 +286,8 @@ export const getOrdersTable = asyncHandler(async (_req, res) => {
         _id: 0,
         status: 1,
         orderId: "$_id",
-        customer: "$customerName",
-        email: "$customerEmail",
+        customer: "$contact.name",
+        email: "$contact.email",
         tickets: 1,
         total: "$totalAmount",
         paymentMethod: 1,
@@ -352,7 +296,6 @@ export const getOrdersTable = asyncHandler(async (_req, res) => {
     },
     { $sort: { placedTime: -1 } },
   ]);
-
   return res.status(200).json(new ApiResponse(200, rows));
 });
 

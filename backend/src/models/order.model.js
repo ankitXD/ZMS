@@ -28,11 +28,10 @@ const orderItemSchema = new Schema(
 
 const orderSchema = new Schema(
   {
-    customer: { type: Types.ObjectId, ref: "Customer" },
     contact: {
-      name: String,
-      email: String,
-      phone: String,
+      name: { type: String, trim: true },
+      email: { type: String, trim: true, lowercase: true },
+      phone: { type: String, trim: true },
     },
     items: { type: [orderItemSchema], default: [] },
     tickets: { type: [ticketSchema], default: [] }, // QR-bearing tickets
