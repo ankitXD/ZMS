@@ -21,7 +21,12 @@ router.post(
   upload.fields([{ name: "imageUrl", maxCount: 1 }]),
   createAnimal,
 );
-router.patch("/:id", verifyJWT, upload.single("image"), updateAnimal);
+router.patch(
+  "/:id",
+  verifyJWT,
+  upload.fields([{ name: "imageUrl", maxCount: 1 }]),
+  updateAnimal,
+);
 router.delete("/:id", verifyJWT, deleteAnimal);
 
 export default router;

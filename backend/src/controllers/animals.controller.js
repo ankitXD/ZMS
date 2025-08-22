@@ -128,7 +128,7 @@ export const updateAnimal = asyncHandler(async (req, res) => {
   const updated = await Animal.findByIdAndUpdate(
     id,
     { $set: updates },
-    { new: true },
+    { new: true, runValidators: true },
   );
   if (!updated) throw new ApiError(404, "Animal not found");
 
