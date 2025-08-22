@@ -17,27 +17,29 @@ const adminUserSchema = new Schema(
       lowercase: true,
       trim: true,
     },
-    role: { type: String, enum: ROLES, required: true },
+    role: { type: String, enum: ROLES, default: "admin", required: true },
     passwordHash: { type: String, required: true },
     status: { type: String, enum: STATUSES, default: "active" },
     lastLoginAt: { type: Date },
+    refreshToken: { type: String },
   },
   { timestamps: { createdAt: "createdAt", updatedAt: false } },
 );
 
-adminUserSchema.index({ email: 1 }, { unique: true });
+// Optional: allow setting plain password via virtual
+adminUserSchema.virtual("password").set(function (password) {
+  this.passwordHash = password;
+});
 
 adminUserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
-
-  this.password = await bcrypt.hash(this.password, 10);
+  if (!this.isModified("passwordHash")) return next();
+  if (!this.passwordHash) return next(new Error("password is required"));
+  this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
   next();
 });
 
 adminUserSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  return bcrypt.compare(password, this.passwordHash);
 };
 
 adminUserSchema.methods.generateAccessToken = function () {
@@ -45,7 +47,8 @@ adminUserSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
+      name: this.name,
+      role: this.role,
     },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
@@ -54,9 +57,7 @@ adminUserSchema.methods.generateAccessToken = function () {
 
 adminUserSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
-    {
-      _id: this._id,
-    },
+    { _id: this._id, tokenType: "refresh" },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRY },
   );
@@ -69,8 +70,9 @@ adminUserSchema.methods.generateTemporaryToken = function () {
     .update(unHashedToken)
     .digest("hex");
   const tokenExpiry = Date.now() + 20 * 60 * 1000; // 20min
-
   return { hashedToken, unHashedToken, tokenExpiry };
 };
+
+adminUserSchema.index({ email: 1 }, { unique: true });
 
 export const AdminUser = model("AdminUser", adminUserSchema);
