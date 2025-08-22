@@ -21,11 +21,13 @@ import healthcheckRouter from "../src/routes/health.routes.js";
 import adminUserRouter from "../src/routes/adminUser.routes.js";
 import animalRouter from "../src/routes/animals.routes.js";
 import messageRouter from "../src/routes/message.routes.js";
+import orderRouter from "../src/routes/order.routes.js";
 
 //Routes Declaration
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/admin", adminUserRouter);
 app.use("/api/v1/animal", animalRouter);
 app.use("/api/v1/message", messageRouter);
+app.use("/api/v1/order", orderRouter);
 
 export { app };
