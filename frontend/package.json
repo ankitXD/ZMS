@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js",
+    "heroku-postbuild": "npm run build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
@@ -33,5 +35,8 @@
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
     "vite": "^7.1.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
