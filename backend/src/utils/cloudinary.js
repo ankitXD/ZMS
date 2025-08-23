@@ -23,7 +23,6 @@ const uploadOnCloudinary = async (filePath) => {
   try {
     if (!filePath) throw new Error("No file path provided to upload");
     // Log the file path to ensure it exists
-    console.log("Uploading file to Cloudinary:", filePath);
 
     response = await cloudinary.uploader.upload(filePath, {
       folder: "user_avatars", // You can specify a folder name

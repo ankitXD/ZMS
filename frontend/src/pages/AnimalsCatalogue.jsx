@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import AnimalCard from "../components/AnimalCard";
-import animals from "../data/animals";
+import { useAnimalStore } from "../store/useAnimalStore.js";
 
 const AnimalsCatalogue = () => {
+  const { animals, listLoading, listError, fetchAnimals } = useAnimalStore();
+
+  useEffect(() => {
+    // Load the latest 4 animals
+    fetchAnimals({ limit: 4, sort: "-createdAt" });
+  }, [fetchAnimals]);
+
   return (
     <section className="relative" aria-label="Animals Catalogue">
       {/* Colored background below the content */}
@@ -23,19 +30,29 @@ const AnimalsCatalogue = () => {
           </p>
         </header>
 
-        {/* Grid of square cards */}
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {animals.slice(0, 4).map((a) => (
-            <li key={a.name}>
-              <AnimalCard
-                image={a.image}
-                name={a.name}
-                description={a.description}
-                aspect="square"
-              />
-            </li>
-          ))}
-        </ul>
+        {listLoading ? (
+          <p className="text-slate-600">Loading animals…</p>
+        ) : listError ? (
+          <p className="text-red-600">Failed to load: {listError}</p>
+        ) : (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {animals.slice(0, 4).map((a) => (
+              <li key={a._id}>
+                <a
+                  href={`/animals/${a._id}`}
+                  className="block focus:outline-none"
+                >
+                  <AnimalCard
+                    image={a.imageUrl || "/placeholder.png"}
+                    name={a.name}
+                    description={a.title || a.category || a.description}
+                    aspect="square"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
 
         {/* CTA */}
         <div className="mt-8 flex justify-center">

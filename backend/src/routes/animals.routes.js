@@ -20,13 +20,15 @@ router.post(
   "/",
   verifyJWT,
   requireAdminRole("admin", "editor", "owner"),
-  /* upload.single("image"), */ createAnimal,
+  upload.single("imageUrl"),
+  createAnimal,
 );
 router.patch(
   "/:id",
   verifyJWT,
   requireAdminRole("admin", "editor", "owner"),
-  /* upload.single("image"), */ updateAnimal,
+  upload.single("imageUrl"),
+  updateAnimal,
 );
 router.delete(
   "/:id",
