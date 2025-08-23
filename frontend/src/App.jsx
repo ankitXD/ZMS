@@ -4,9 +4,9 @@ import Layout from "./components/Layout";
 import LandingPage from "../src/pages/LandingPage";
 import AboutUs from "../src/pages/AboutUs";
 import Contact from "../src/pages/Contact";
-import Animals from "../src/pages/Animals";
+import Animals from "../src/pages/Animals.jsx";
 import BookTickets from "../src/pages/BookTickets";
-import AnimalDetail from "./pages/AnimalDetail";
+import AnimalDetail from "../src/pages/AnimalDetail.jsx";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import ScrollToTop, { BackToTopButton } from "./components/ScrollToTop";
@@ -37,6 +37,7 @@ function App() {
           <Route path="about" element={<AboutUs />} />
           <Route path="contact" element={<Contact />} />
           <Route path="animals" element={<Animals />} />
+          <Route path="animals/:id" element={<AnimalDetail />} />
           <Route path="tickets" element={<BookTickets />} />
           <Route path="terms" element={<Terms />} />
           <Route path="privacy" element={<Privacy />} />
@@ -134,9 +135,7 @@ function App() {
             }
           />
         </Route>
-        <Route path="/animals/:slug" element={<AnimalDetail />} />
       </Routes>
-      {/* Place near the end so it overlays content */}
       <BackToTopButton />
     </>
   );

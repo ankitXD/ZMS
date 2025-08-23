@@ -26,7 +26,7 @@ const Header = ({ onToggleSidebar }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
-    navigate("/admin/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const toggleSidebar = () => {

@@ -1,9 +1,21 @@
 import React from "react";
+import { useMessageStore } from "../store/useMessageStore";
 
 const Contact = () => {
-  const onSubmit = (e) => {
+  const { submitMessage, submitting, submitSuccess } = useMessageStore();
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Connect to your backend/contact endpoint
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const payload = {
+      name: fd.get("name"),
+      email: fd.get("email"),
+      subject: fd.get("subject"),
+      message: fd.get("message"),
+    };
+    const res = await submitMessage(payload);
+    if (res?.ok) form.reset();
   };
 
   return (
@@ -143,10 +155,18 @@ const Contact = () => {
 
                 <button
                   type="submit"
-                  className="mt-2 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
+                  disabled={submitting}
+                  className="mt-2 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
                 >
-                  Send Message
+                  {submitting ? "Sending..." : "Send Message"}
                 </button>
+
+                {submitSuccess && (
+                  <p className="text-sm text-emerald-700">
+                    Thanks! We’ll get back to you soon.
+                  </p>
+                )}
+
                 <p className="text-xs text-slate-500">
                   We usually reply within 1–2 business days.
                 </p>

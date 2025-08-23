@@ -1,25 +1,43 @@
-import React, { useMemo } from "react";
+import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import animals from "../data/animals";
-
-const slugify = (s) =>
-  String(s || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+import { useAnimalStore } from "../store/useAnimalStore.js";
 
 const AnimalDetail = () => {
-  const { slug } = useParams();
+  const { id } = useParams();
+  const { animal, itemLoading, itemError, fetchAnimalById } = useAnimalStore();
 
-  const animal = useMemo(() => {
-    if (!slug) return null;
-    // Try match by explicit slug property or by slugified name
+  useEffect(() => {
+    if (id) fetchAnimalById(id);
+  }, [id, fetchAnimalById]);
+
+  if (itemLoading) {
     return (
-      animals.find((a) => a.slug === slug) ||
-      animals.find((a) => slugify(a.name) === slug) ||
-      null
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-12">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+          <p className="text-slate-600">Loading…</p>
+        </div>
+      </section>
     );
-  }, [slug]);
+  }
+
+  if (itemError) {
+    return (
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-12">
+        <div className="rounded-xl border border-rose-200 bg-white p-8 text-center">
+          <h1 className="text-xl font-semibold text-rose-700">Error</h1>
+          <p className="mt-2 text-slate-700">{itemError}</p>
+          <div className="mt-6">
+            <Link
+              to="/animals"
+              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Back to Animals
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (!animal) {
     return (
@@ -50,8 +68,7 @@ const AnimalDetail = () => {
     );
   }
 
-  const { name, image, description, habitat, diet, lifespan, scientificName } =
-    animal;
+  const { name, imageUrl, description, title, category } = animal;
 
   return (
     <section className="relative" aria-label={`${name} details`}>
@@ -60,14 +77,13 @@ const AnimalDetail = () => {
         aria-hidden="true"
       />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        {/* Hero */}
         <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow">
           <div className="grid md:grid-cols-2">
             <div className="relative">
               <div className="aspect-square w-full bg-slate-100">
-                {image ? (
+                {imageUrl ? (
                   <img
-                    src={image}
+                    src={imageUrl}
                     alt={name}
                     className="h-full w-full object-cover"
                     loading="lazy"
@@ -83,39 +99,14 @@ const AnimalDetail = () => {
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
                 {name}
               </h1>
-              {scientificName && (
-                <p className="mt-1 text-sm italic text-slate-600">
-                  {scientificName}
+              {(title || category) && (
+                <p className="mt-1 text-sm text-slate-600">
+                  {(title || category) ?? ""}
                 </p>
               )}
-              <p className="mt-4 text-slate-700">{description}</p>
-
-              <dl className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Habitat
-                  </dt>
-                  <dd className="mt-1 text-sm text-slate-900">
-                    {habitat || "Varied habitats across the world"}
-                  </dd>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Diet
-                  </dt>
-                  <dd className="mt-1 text-sm text-slate-900">
-                    {diet || "Information coming soon"}
-                  </dd>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Lifespan
-                  </dt>
-                  <dd className="mt-1 text-sm text-slate-900">
-                    {lifespan || "Unknown"}
-                  </dd>
-                </div>
-              </dl>
+              <p className="mt-4 text-slate-700">
+                {description || "Details coming soon."}
+              </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
@@ -135,7 +126,6 @@ const AnimalDetail = () => {
           </div>
         </div>
 
-        {/* Extra content */}
         <div className="mt-8 grid gap-6 md:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-semibold text-slate-900">
@@ -166,7 +156,6 @@ const AnimalDetail = () => {
           </div>
         </div>
 
-        {/* Final call to action */}
         <div className="mt-10 flex justify-center">
           <Link
             to="/tickets"

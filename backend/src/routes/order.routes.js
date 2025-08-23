@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { requireAdminRole } from "../middlewares/auth.middleware.js";
 import {
   createOrder,
   getOrders,
@@ -19,12 +20,27 @@ router.post("/", createOrder);
 // Public scan URL (put before :id so it isn’t captured by that route)
 router.get("/verify", verifyTicket);
 
-// Admin-protected management
-router.get("/", verifyJWT, getOrders);
-router.get("/table", verifyJWT, getOrdersTable);
-router.get("/:id", verifyJWT, getOrder);
-router.patch("/:id", verifyJWT, updateOrder);
-router.patch("/:id/status", verifyJWT, updateOrderStatus);
-router.delete("/:id", verifyJWT, deleteOrder);
+// Admin-only management
+router.get("/", verifyJWT, requireAdminRole("admin", "owner"), getOrders);
+router.get(
+  "/table",
+  verifyJWT,
+  requireAdminRole("admin", "owner"),
+  getOrdersTable,
+);
+router.get("/:id", verifyJWT, requireAdminRole("admin", "owner"), getOrder);
+router.patch(
+  "/:id",
+  verifyJWT,
+  requireAdminRole("admin", "owner"),
+  updateOrder,
+);
+router.patch(
+  "/:id/status",
+  verifyJWT,
+  requireAdminRole("admin", "owner"),
+  updateOrderStatus,
+);
+router.delete("/:id", verifyJWT, requireAdminRole("owner"), deleteOrder);
 
 export default router;

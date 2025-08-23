@@ -1,141 +1,106 @@
-import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import AnimalCard from "../components/AnimalCard";
-import animals from "../data/animals";
-
-const slugify = (s) =>
-  String(s || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+import React, { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useAnimalStore } from "../store/useAnimalStore.js";
+import AnimalCard from "../components/AnimalCard.jsx";
 
 const Animals = () => {
-  const [q, setQ] = useState("");
-  const [term, setTerm] = useState("");
+  const [params, setParams] = useSearchParams();
+  const q = params.get("q") || "";
+  const category = params.get("category") || "";
+  const page = Number(params.get("page") || 1);
 
-  const filtered = useMemo(() => {
-    const t = term.trim().toLowerCase();
-    if (!t) return animals;
-    return animals.filter((a) =>
-      [a.name, a.description, a.category]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(t))
-    );
-  }, [term]);
+  const { animals, pagination, listLoading, listError, fetchAnimals } =
+    useAnimalStore();
 
-  const onSearch = (e) => {
-    e.preventDefault();
-    setTerm(q);
-  };
+  useEffect(() => {
+    fetchAnimals({
+      q: q || undefined,
+      category: category || undefined,
+      page,
+      limit: 12,
+      sort: "-createdAt",
+    });
+  }, [q, category, page, fetchAnimals]);
 
-  const clearSearch = () => {
-    setQ("");
-    setTerm("");
+  const goToPage = (p) => {
+    const next = new URLSearchParams(params);
+    next.set("page", String(p));
+    setParams(next, { replace: false });
   };
 
   return (
-    <section className="relative" aria-label="All Animals">
-      <div
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-white via-emerald-50 to-emerald-100"
-        aria-hidden="true"
-      />
+    <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12">
+      <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <h1 className="text-2xl font-semibold text-slate-900">Animals</h1>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14">
-        <header className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-            Animals
-          </h1>
-          <p className="mt-2 max-w-2xl text-slate-600">
-            Explore the residents of Zoo Verse. More species are coming soon as
-            we expand our habitats and programs.
-          </p>
-
-          {/* Search */}
-          <form
-            onSubmit={onSearch}
-            className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center"
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            const next = new URLSearchParams(params);
+            next.set("q", (fd.get("q") || "").toString());
+            next.set("page", "1");
+            setParams(next);
+          }}
+          className="flex gap-2"
+        >
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Search animals..."
+            className="w-64 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
           >
-            <div className="relative w-full sm:w-96">
-              <input
-                type="search"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search animals by name or description..."
-                aria-label="Search animals"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            Search
+          </button>
+        </form>
+      </header>
+
+      {listLoading ? (
+        <p className="text-slate-600">Loading animals…</p>
+      ) : listError ? (
+        <p className="text-red-600">Failed to load: {listError}</p>
+      ) : animals.length === 0 ? (
+        <p className="text-slate-600">No animals found.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {animals.map((a) => (
+              <AnimalCard
+                key={a._id}
+                image={a.imageUrl || "/placeholder.png"}
+                name={a.name}
+                description={a.title || a.category}
+                href={`/animals/${a._id}`}
               />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                </svg>
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
-              >
-                Search
-              </button>
-              {term && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </form>
+            ))}
+          </div>
 
-          {term && (
-            <p className="mt-2 text-sm text-slate-600">
-              Showing {filtered.length} result{filtered.length !== 1 ? "s" : ""}{" "}
-              for “{term}”
+          <div className="mt-8 flex items-center justify-between">
+            <button
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+              className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <p className="text-sm text-slate-600">
+              Page {pagination.page} of {pagination.pages}
             </p>
-          )}
-        </header>
-
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {filtered.length === 0 && (
-            <li className="col-span-full">
-              <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-600">
-                No animals found.
-              </div>
-            </li>
-          )}
-          {filtered.map((a) => {
-            const slug = a.slug || slugify(a.name);
-            return (
-              <li key={a.name}>
-                <Link to={`/animals/${slug}`} className="block">
-                  <AnimalCard
-                    image={a.image}
-                    name={a.name}
-                    description={a.description}
-                    aspect="square"
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="mt-8 flex justify-center">
-          <Link
-            to="/tickets"
-            className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
-          >
-            Book Tickets
-          </Link>
-        </div>
-      </div>
-    </section>
+            <button
+              disabled={page >= (pagination.pages || 1)}
+              onClick={() => goToPage(page + 1)}
+              className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
+    </main>
   );
 };
 
