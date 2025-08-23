@@ -1,25 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
-const ADMIN_ANIMALS_KEY = "adminAnimals";
-
-const loadAnimals = () => {
-  try {
-    const raw = localStorage.getItem(ADMIN_ANIMALS_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveAnimals = (list) => {
-  localStorage.setItem(ADMIN_ANIMALS_KEY, JSON.stringify(list));
-};
-
-const uuid = () =>
-  (window.crypto?.randomUUID && crypto.randomUUID()) ||
-  `ani_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+import { useAnimalStore } from "../../../store/useAnimalStore";
+import toast from "react-hot-toast";
 
 const AddAnimals = () => {
   const [name, setName] = useState("");
@@ -27,11 +9,12 @@ const AddAnimals = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [imageData, setImageData] = useState(""); // base64 from file
-  const [saving, setSaving] = useState(false);
+  const [imageData, setImageData] = useState(""); // preview (base64)
+  const [imageFile, setImageFile] = useState(null); // actual file to upload
   const [msg, setMsg] = useState("");
 
   const navigate = useNavigate();
+  const { createAnimal, creating } = useAnimalStore();
 
   const imgSrc = imageData || imageUrl;
 
@@ -48,10 +31,11 @@ const AddAnimals = () => {
     if (!file) return;
     try {
       const dataUrl = await readFileAsDataURL(file);
-      setImageData(dataUrl);
+      setImageData(dataUrl); // preview
+      setImageFile(file); // upload this
       setImageUrl(""); // prefer uploaded file over URL
     } catch {
-      alert("Could not read the selected file.");
+      toast.error("Could not read the selected file.");
     }
   };
 
@@ -62,6 +46,7 @@ const AddAnimals = () => {
     setDescription("");
     setImageUrl("");
     setImageData("");
+    setImageFile(null);
     setMsg("");
   };
 
@@ -72,29 +57,22 @@ const AddAnimals = () => {
     if (!name.trim()) return setMsg("Name is required.");
     if (description.trim().length < 10)
       return setMsg("Description should be at least 10 characters.");
-    if (!imgSrc) {
-      // optional – allow missing image
-    }
 
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
-
-    const nextAnimal = {
-      id: uuid(),
+    const res = await createAnimal({
       name: name.trim(),
       title: title.trim() || undefined,
       category: category.trim() || undefined,
       description: description.trim(),
-      image: imgSrc || "",
-      createdAt: new Date().toISOString(),
-    };
+      imageFile: imageFile || undefined,
+      imageUrl: imageFile ? undefined : imageUrl.trim() || undefined,
+    });
 
-    const list = loadAnimals();
-    list.unshift(nextAnimal);
-    saveAnimals(list);
-
-    setSaving(false);
-    navigate("/admin/dashboard/animals", { replace: true });
+    if (res?.ok) {
+      toast.success("Animal created");
+      navigate("/admin/dashboard/animals", { replace: true });
+    } else {
+      setMsg(res?.message || "Failed to create animal");
+    }
   };
 
   return (
@@ -204,7 +182,10 @@ const AddAnimals = () => {
                 value={imageUrl}
                 onChange={(e) => {
                   setImageUrl(e.target.value);
-                  if (e.target.value) setImageData("");
+                  if (e.target.value) {
+                    setImageData("");
+                    setImageFile(null);
+                  }
                 }}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 placeholder="https://example.com/animal.jpg"
@@ -235,7 +216,7 @@ const AddAnimals = () => {
 
             <div className="sm:col-span-2 flex items-center justify-between gap-3">
               <div className="text-sm">
-                {msg && <span className="text-emerald-700">{msg}</span>}
+                {msg && <span className="text-rose-700">{msg}</span>}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -247,10 +228,10 @@ const AddAnimals = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={creating}
                   className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : "Add Animal"}
+                  {creating ? "Saving..." : "Add Animal"}
                 </button>
               </div>
             </div>

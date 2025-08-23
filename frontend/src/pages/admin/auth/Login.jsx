@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useAuthStore } from "../../../store/useAuthStore.js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,27 +10,22 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const { loginAdmin, loggingIn, loginError } = useAuthStore();
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
-    try {
-      // TODO: Replace with real API call
-      await new Promise((r) => setTimeout(r, 600));
-      if (!email || !password) throw new Error("Please enter credentials");
-
-      // Simulate token
-      localStorage.setItem("adminToken", "demo-token");
+    const res = await loginAdmin({ email: email.trim(), password });
+    if (res?.ok) {
       navigate(from, { replace: true });
-    } catch (err) {
-      setError(err?.message || "Login failed");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(res?.message || "Login failed");
     }
   };
+
+  const displayError = error || loginError;
 
   return (
     <main className="min-h-screen grid place-items-center bg-gradient-to-b from-slate-50 to-white px-4 py-10">
@@ -42,9 +38,9 @@ const Login = () => {
         </div>
 
         <form onSubmit={onSubmit} className="mt-6 grid gap-4">
-          {error && (
+          {displayError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
+              {displayError}
             </div>
           )}
 
@@ -100,10 +96,10 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loggingIn}
             className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 disabled:opacity-50"
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loggingIn ? "Signing in…" : "Sign In"}
           </button>
 
           <p className="text-center text-sm text-slate-600">

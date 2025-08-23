@@ -7,6 +7,10 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 
 // Create
 export const createAnimal = asyncHandler(async (req, res) => {
+  if (req.file && !["owner", "admin"].includes(req.user?.role)) {
+    throw new ApiError(403, "Only admins can upload files");
+  }
+
   const { name, title, category, description, imageUrl } = req.body;
 
   if (!name || !description) {
@@ -99,6 +103,10 @@ export const getAnimal = asyncHandler(async (req, res) => {
 
 // Update by ID (partial)
 export const updateAnimal = asyncHandler(async (req, res) => {
+  if (req.file && !["owner", "admin"].includes(req.user?.role)) {
+    throw new ApiError(403, "Only admins can upload files");
+  }
+
   const { id } = req.params;
   if (!mongoose.isValidObjectId(id)) {
     throw new ApiError(400, "Invalid animal id");

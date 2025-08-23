@@ -1,21 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-
-const ADMIN_ANIMALS_KEY = "adminAnimals";
-
-const loadAnimals = () => {
-  try {
-    const raw = localStorage.getItem(ADMIN_ANIMALS_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveAnimals = (list) => {
-  localStorage.setItem(ADMIN_ANIMALS_KEY, JSON.stringify(list));
-};
+import { useAnimalStore } from "../../../store/useAnimalStore";
+import toast from "react-hot-toast";
 
 const readFileAsDataURL = (file) =>
   new Promise((resolve, reject) => {
@@ -25,15 +11,18 @@ const readFileAsDataURL = (file) =>
     reader.readAsDataURL(file);
   });
 
-const isUrl = (s) => /^https?:\/\//i.test(s);
-
 const EditAnimals = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Base data
-  const [loaded, setLoaded] = useState(false);
-  const [orig, setOrig] = useState(null); // original record
+  const {
+    animal,
+    itemLoading,
+    itemError,
+    fetchAnimalById,
+    updateAnimal,
+    updating,
+  } = useAnimalStore();
 
   // Editable fields
   const [name, setName] = useState("");
@@ -42,40 +31,31 @@ const EditAnimals = () => {
   const [description, setDescription] = useState("");
 
   // Image handling
-  const [existingImage, setExistingImage] = useState(""); // from stored record
-  const [imageUrl, setImageUrl] = useState(""); // new URL input
-  const [imageData, setImageData] = useState(""); // new uploaded base64
+  const [existingImage, setExistingImage] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageData, setImageData] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+
   const imgSrc = useMemo(
     () => imageData || imageUrl || existingImage,
     [imageData, imageUrl, existingImage]
   );
 
-  // UI state
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    if (id) fetchAnimalById(id);
+  }, [id, fetchAnimalById]);
 
   useEffect(() => {
-    const list = loadAnimals();
-    const found = list.find((a) => a.id === id);
-    setOrig(found || null);
-    if (found) {
-      setName(found.name || "");
-      setTitle(found.title || "");
-      setCategory(found.category || "");
-      setDescription(found.description || "");
-      // Put stored image into appropriate state for preview
-      if (found.image) {
-        if (isUrl(found.image)) {
-          setExistingImage(found.image);
-        } else if (String(found.image).startsWith("data:")) {
-          setExistingImage(found.image); // keep as existing; user can replace with new upload/URL
-        } else {
-          setExistingImage(found.image);
-        }
-      }
-    }
-    setLoaded(true);
-  }, [id]);
+    if (!animal) return;
+    setName(animal.name || "");
+    setTitle(animal.title || "");
+    setCategory(animal.category || "");
+    setDescription(animal.description || "");
+    setExistingImage(animal.imageUrl || "");
+    setImageUrl("");
+    setImageData("");
+    setImageFile(null);
+  }, [animal]);
 
   const onPickFile = async (e) => {
     const file = e.target.files?.[0];
@@ -83,67 +63,55 @@ const EditAnimals = () => {
     try {
       const dataUrl = await readFileAsDataURL(file);
       setImageData(dataUrl);
-      setImageUrl("");
-      // Keep existingImage but overridden in imgSrc by imageData
+      setImageFile(file); // send this with multipart
+      setImageUrl(""); // prefer uploaded file over URL
     } catch {
-      alert("Could not read the selected file.");
+      toast.error("Could not read the selected file.");
     }
   };
 
   const clearImage = () => {
     setImageData("");
     setImageUrl("");
-    setExistingImage("");
+    setImageFile(null);
+    // keep existingImage so user can submit without changing it
   };
 
   const resetToOriginal = () => {
-    if (!orig) return;
-    setName(orig.name || "");
-    setTitle(orig.title || "");
-    setCategory(orig.category || "");
-    setDescription(orig.description || "");
+    if (!animal) return;
+    setName(animal.name || "");
+    setTitle(animal.title || "");
+    setCategory(animal.category || "");
+    setDescription(animal.description || "");
+    setExistingImage(animal.imageUrl || "");
     setImageData("");
     setImageUrl("");
-    setExistingImage(orig.image || "");
-    setMsg("");
+    setImageFile(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMsg("");
-
-    if (!name.trim()) return setMsg("Name is required.");
+    if (!name.trim()) return toast.error("Name is required.");
     if (description.trim().length < 10)
-      return setMsg("Description should be at least 10 characters.");
+      return toast.error("Description should be at least 10 characters.");
 
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
-
-    const list = loadAnimals();
-    const idx = list.findIndex((a) => a.id === id);
-    if (idx === -1) {
-      setSaving(false);
-      return setMsg("Animal not found. It may have been removed.");
-    }
-
-    const updated = {
-      ...list[idx],
+    const payload = {
       name: name.trim(),
       title: title.trim() || undefined,
       category: category.trim() || undefined,
       description: description.trim(),
-      image: imgSrc || "",
-      updatedAt: new Date().toISOString(),
+      imageUrl: imageFile ? undefined : imageUrl.trim() || undefined,
+      imageFile: imageFile || undefined,
     };
 
-    list[idx] = updated;
-    saveAnimals(list);
-
-    setSaving(false);
-    navigate("/admin/dashboard/animals", { replace: true });
+    const res = await updateAnimal(id, payload);
+    if (res?.ok) {
+      toast.success("Animal updated");
+      navigate("/admin/dashboard/animals", { replace: true });
+    }
   };
 
-  if (!loaded) {
+  if (itemLoading) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-slate-600">
         Loading...
@@ -151,10 +119,10 @@ const EditAnimals = () => {
     );
   }
 
-  if (!orig) {
+  if (itemError || !animal) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-        <p className="text-slate-700">Animal not found.</p>
+        <p className="text-slate-700">{itemError || "Animal not found."}</p>
         <Link
           to="/admin/dashboard/animals"
           className="mt-4 inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -173,7 +141,7 @@ const EditAnimals = () => {
           <h1 className="text-2xl font-bold text-slate-900">Edit Animal</h1>
           <p className="text-sm text-slate-600">
             Update details for{" "}
-            <span className="font-medium text-slate-900">{orig.name}</span>
+            <span className="font-medium text-slate-900">{animal.name}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -186,10 +154,10 @@ const EditAnimals = () => {
           <button
             form="edit-animal-form"
             type="submit"
-            disabled={saving}
+            disabled={updating}
             className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {updating ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
@@ -282,7 +250,10 @@ const EditAnimals = () => {
                 value={imageUrl}
                 onChange={(e) => {
                   setImageUrl(e.target.value);
-                  if (e.target.value) setImageData("");
+                  if (e.target.value) {
+                    setImageData("");
+                    setImageFile(null);
+                  }
                 }}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 placeholder="https://example.com/animal.jpg"
@@ -315,28 +286,6 @@ const EditAnimals = () => {
                     Remove Image
                   </button>
                 )}
-              </div>
-            </div>
-
-            <div className="sm:col-span-2 flex items-center justify-between gap-3">
-              <div className="text-sm">
-                {msg && <span className="text-rose-700">{msg}</span>}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={resetToOriginal}
-                  className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Reset
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
               </div>
             </div>
           </form>

@@ -33,3 +33,16 @@ export const requireAdminRole =
     }
     next();
   };
+
+// NEW: only allow certain roles when request is multipart/form-data (i.e., file upload)
+export const requireMultipartRole =
+  (...allowedRoles) =>
+  (req, _res, next) => {
+    const isMultipart = req.is("multipart/form-data");
+    if (!isMultipart) return next(); // no file upload -> allow through
+    if (!req.user) return next(new ApiError(401, "Unauthorized"));
+    if (!allowedRoles.includes(req.user.role)) {
+      return next(new ApiError(403, "Only admins can upload files"));
+    }
+    next();
+  };

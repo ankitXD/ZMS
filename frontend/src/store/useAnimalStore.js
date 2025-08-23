@@ -130,7 +130,7 @@ export const useAnimalStore = create((set, get) => ({
         if (category != null) payload.category = category;
         if (description != null) payload.description = description;
         if (imageUrl != null) payload.imageUrl = imageUrl;
-        res = await axiosInstance.patch(`/animals/${id}`, payload);
+        res = await axiosInstance.patch(`/animal/${id}`, payload);
       }
       const updated = res?.data?.data;
       set({

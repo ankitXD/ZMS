@@ -1,39 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-
-const ADMIN_ANIMALS_KEY = "adminAnimals";
-
-const loadAnimals = () => {
-  try {
-    const raw = localStorage.getItem(ADMIN_ANIMALS_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveAnimals = (list) => {
-  localStorage.setItem(ADMIN_ANIMALS_KEY, JSON.stringify(list));
-};
+import { useAnimalStore } from "../../../store/useAnimalStore";
 
 const ViewAnimals = () => {
-  const [animals, setAnimals] = useState([]);
+  const {
+    animals,
+    listLoading,
+    listError,
+    fetchAnimals,
+    deleteAnimal,
+    deletingId,
+  } = useAnimalStore();
 
   useEffect(() => {
-    setAnimals(loadAnimals());
-  }, []);
+    fetchAnimals({ sort: "-createdAt", limit: 100 });
+  }, [fetchAnimals]);
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this animal?")) return;
-    setAnimals((prev) => {
-      const next = prev.filter((a) => a.id !== id);
-      saveAnimals(next);
-      return next;
-    });
+    await deleteAnimal(id);
   };
 
-  const handleRefresh = () => setAnimals(loadAnimals());
+  const handleRefresh = () => fetchAnimals({ sort: "-createdAt", limit: 100 });
 
   return (
     <section aria-label="View Animals" className="space-y-4">
@@ -58,7 +46,15 @@ const ViewAnimals = () => {
         </div>
       </header>
 
-      {animals.length === 0 ? (
+      {listLoading ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+          <p className="text-slate-600">Loading animals…</p>
+        </div>
+      ) : listError ? (
+        <div className="rounded-xl border border-rose-200 bg-white p-8 text-center">
+          <p className="text-rose-700">Failed to load: {listError}</p>
+        </div>
+      ) : animals.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
           <p className="text-slate-600">No animals found.</p>
           <p className="mt-2 text-sm text-slate-500">
@@ -97,12 +93,12 @@ const ViewAnimals = () => {
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {animals.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50">
+                  <tr key={a._id} className="hover:bg-slate-50">
                     <td className="px-4 py-3">
                       <div className="h-12 w-12 overflow-hidden rounded-md bg-slate-100 ring-1 ring-slate-200">
-                        {a.image ? (
+                        {a.imageUrl ? (
                           <img
-                            src={a.image}
+                            src={a.imageUrl}
                             alt={a.name || "Animal"}
                             className="h-full w-full object-cover"
                             loading="lazy"
@@ -126,17 +122,18 @@ const ViewAnimals = () => {
                     <td className="px-4 py-3 text-right text-sm">
                       <div className="inline-flex items-center gap-2">
                         <Link
-                          to={`/admin/dashboard/animals/${a.id}/edit`}
+                          to={`/admin/dashboard/animals/${a._id}/edit`}
                           className="rounded-full border border-slate-200 px-3 py-1 text-slate-700 hover:bg-slate-50"
                           title="Edit"
                         >
                           Edit
                         </Link>
                         <button
-                          onClick={() => handleDelete(a.id)}
-                          className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 hover:bg-red-100"
+                          onClick={() => handleDelete(a._id)}
+                          disabled={deletingId === a._id}
+                          className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 hover:bg-red-100 disabled:opacity-60"
                         >
-                          Delete
+                          {deletingId === a._id ? "Deleting…" : "Delete"}
                         </button>
                       </div>
                     </td>

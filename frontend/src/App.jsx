@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/useAuthStore.js";
 import Layout from "./components/Layout";
 import LandingPage from "../src/pages/LandingPage";
 import AboutUs from "../src/pages/AboutUs";
@@ -24,12 +25,36 @@ import Orders from "../src/pages/admin/orders/Orders";
 import Payments from "../src/pages/admin/payments/Payments";
 import ViewReports from "../src/pages/admin/reports/ViewReports";
 import Settings from "../src/pages/admin/settings/Settings";
-import RequireAuth from "../src/pages/admin/Layout/RequireAuth";
+
+// Auth loader (template)
+const AuthLoader = () => (
+  <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
+    <p className="text-white text-lg">Checking authentication...</p>
+  </div>
+);
+
+// Protected route (template) – uses backend roles owner|admin|editor
+const ProtectedRoute = ({ children }) => {
+  const { authUser, isAuthCheck } = useAuthStore();
+  if (isAuthCheck) return <AuthLoader />;
+  if (!authUser) return <Navigate to="/login" replace />;
+  if (["owner", "admin", "editor"].includes(authUser.role) === false) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
 
 function App() {
+  const { isAuthCheck, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (isAuthCheck) return <AuthLoader />;
+
   return (
     <>
-      {/* Must be inside Router context */}
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
@@ -45,95 +70,25 @@ function App() {
 
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<SignUp />} />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+
         <Route
           path="/admin/dashboard"
           element={
-            <RequireAuth>
+            <ProtectedRoute>
               <AdminLayout />
-            </RequireAuth>
+            </ProtectedRoute>
           }
         >
-          <Route
-            index
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="animals"
-            element={
-              <RequireAuth>
-                <ViewAnimals />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="add/animals"
-            element={
-              <RequireAuth>
-                <AddAnimals />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="animals/:id/edit"
-            element={
-              <RequireAuth>
-                <EditAnimals />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="admins"
-            element={
-              <RequireAuth>
-                <Admins />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="messages"
-            element={
-              <RequireAuth>
-                <ViewMessages />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="orders"
-            element={
-              <RequireAuth>
-                <Orders />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="payments"
-            element={
-              <RequireAuth>
-                <Payments />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="reports"
-            element={
-              <RequireAuth>
-                <ViewReports />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <RequireAuth>
-                <Settings />
-              </RequireAuth>
-            }
-          />
+          <Route index element={<Dashboard />} />
+          <Route path="animals" element={<ViewAnimals />} />
+          <Route path="add/animals" element={<AddAnimals />} />
+          <Route path="animals/:id/edit" element={<EditAnimals />} />
+          <Route path="admins" element={<Admins />} />
+          <Route path="messages" element={<ViewMessages />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="reports" element={<ViewReports />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
       <BackToTopButton />

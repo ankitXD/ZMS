@@ -1,39 +1,47 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { requireAdminRole } from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/multer.middleware.js";
 import {
-  createAnimal,
   getAnimals,
   getAnimal,
+  createAnimal,
   updateAnimal,
   deleteAnimal,
 } from "../controllers/animals.controller.js";
-
+import {
+  verifyJWT,
+  requireAdminRole,
+  requireMultipartRole,
+} from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 const router = Router();
 
 router.get("/", getAnimals);
 router.get("/:id", getAnimal);
 
-// Admin/editor can mutate animals
+// Create: editors can create via JSON, but only admin/owner can upload files
 router.post(
   "/",
   verifyJWT,
-  requireAdminRole("admin", "editor", "owner"),
-  upload.single("imageUrl"),
+  requireAdminRole("owner", "admin", "editor"),
+  requireMultipartRole("owner", "admin"),
+  upload.single("image"),
   createAnimal,
 );
+
+// Update: editors can edit text, only admin/owner can upload/replace image
 router.patch(
   "/:id",
   verifyJWT,
-  requireAdminRole("admin", "editor", "owner"),
-  upload.single("imageUrl"),
+  requireAdminRole("owner", "admin", "editor"),
+  requireMultipartRole("owner", "admin"),
+  upload.single("image"),
   updateAnimal,
 );
+
+// Delete: admin/owner only
 router.delete(
   "/:id",
   verifyJWT,
-  requireAdminRole("admin", "owner"),
+  requireAdminRole("owner", "admin"),
   deleteAnimal,
 );
 
