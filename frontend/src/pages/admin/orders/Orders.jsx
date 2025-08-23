@@ -1,24 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useOrderStore } from "../../../store/useOrderStore.js";
 
-const STORAGE_KEY = "ticketOrders";
-
-const loadOrders = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveOrders = (list) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-};
-
-const currency = (n) =>
+const money = (n, code = "INR") =>
   typeof n === "number"
-    ? n.toLocaleString(undefined, { style: "currency", currency: "USD" })
+    ? n.toLocaleString(undefined, { style: "currency", currency: code })
     : "-";
 
 const StatusBadge = ({ status }) => {
@@ -40,112 +25,56 @@ const StatusBadge = ({ status }) => {
 };
 
 const Orders = () => {
-  const [orders, setOrders] = useState([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
 
+  const {
+    orders,
+    pagination,
+    ordersLoading,
+    ordersError,
+    fetchOrders,
+    updateOrderStatus,
+    deleteOrder,
+    deletingId,
+    updatingStatus,
+  } = useOrderStore();
+
   useEffect(() => {
-    const list = loadOrders().sort(
-      (a, b) =>
-        new Date(b.createdAt || b.date).getTime() -
-        new Date(a.createdAt || a.date).getTime()
-    );
-    setOrders(list);
-  }, []);
+    fetchOrders({ sort: "-createdAt", limit: 50 });
+  }, [fetchOrders]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return orders.filter((o) => {
-      const statusOk =
-        status === "all" ? true : (o.status || "pending") === status;
+    return (orders || []).filter((o) => {
+      const sOk = status === "all" ? true : (o.status || "pending") === status;
+      const name = o.contact?.name || "";
+      const email = o.contact?.email || "";
+      const pid = o._id || "";
+      const pay = o.paymentMethod || "";
       const qOk = !q
         ? true
-        : [o.id, o.name, o.email, o.subject]
+        : [pid, name, email, pay]
             .filter(Boolean)
             .some((v) => String(v).toLowerCase().includes(q));
-      return statusOk && qOk;
+      return sOk && qOk;
     });
-  }, [orders, query, status]);
+  }, [orders, status, query]);
 
-  const handleUpdateStatus = (id, nextStatus) => {
-    setOrders((prev) => {
-      const next = prev.map((o) =>
-        o.id === id ? { ...o, status: nextStatus } : o
-      );
-      saveOrders(next);
-      return next;
-    });
+  const handleRefresh = () => fetchOrders({ sort: "-createdAt", limit: 50 });
+
+  const handleMarkPaid = async (id) => {
+    await updateOrderStatus(id, "paid");
   };
-
-  const handleDelete = (id) => {
+  const handleCancel = async (id) => {
+    await updateOrderStatus(id, "cancelled");
+  };
+  const handleRefund = async (id) => {
+    await updateOrderStatus(id, "refunded");
+  };
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this order?")) return;
-    setOrders((prev) => {
-      const next = prev.filter((o) => o.id !== id);
-      saveOrders(next);
-      return next;
-    });
-  };
-
-  const handleClearAll = () => {
-    if (!window.confirm("Clear all orders? This cannot be undone.")) return;
-    localStorage.removeItem(STORAGE_KEY);
-    setOrders([]);
-  };
-
-  const handleRefresh = () => {
-    setOrders(loadOrders());
-  };
-
-  // Optional: create a few demo orders to visualize the table
-  const seedDemo = () => {
-    const now = Date.now();
-    const demo = [
-      {
-        id:
-          "ORD-" +
-          Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, "0"),
-        name: "Ava Johnson",
-        email: "ava@example.com",
-        createdAt: new Date(now - 1000 * 60 * 30).toISOString(),
-        tickets: { adult: 2, child: 1, senior: 0 },
-        total: 55,
-        paymentMethod: "Card",
-        status: "paid",
-      },
-      {
-        id:
-          "ORD-" +
-          Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, "0"),
-        name: "Noah Smith",
-        email: "noah@example.com",
-        createdAt: new Date(now - 1000 * 60 * 90).toISOString(),
-        tickets: { adult: 1, child: 2, senior: 1 },
-        total: 62,
-        paymentMethod: "UPI",
-        status: "pending",
-      },
-      {
-        id:
-          "ORD-" +
-          Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, "0"),
-        name: "Mia Lee",
-        email: "mia@example.com",
-        createdAt: new Date(now - 1000 * 60 * 240).toISOString(),
-        tickets: { adult: 2, child: 0, senior: 0 },
-        total: 40,
-        paymentMethod: "Card",
-        status: "cancelled",
-      },
-    ];
-    const merged = [...demo, ...orders];
-    setOrders(merged);
-    saveOrders(merged);
+    await deleteOrder(id);
   };
 
   return (
@@ -165,19 +94,6 @@ const Orders = () => {
           >
             Refresh
           </button>
-          <button
-            onClick={seedDemo}
-            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            title="Add a few demo orders for testing"
-          >
-            Seed Demo
-          </button>
-          <button
-            onClick={handleClearAll}
-            className="inline-flex items-center rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700"
-          >
-            Clear All
-          </button>
         </div>
       </div>
 
@@ -185,7 +101,9 @@ const Orders = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-slate-600">
           Total:{" "}
-          <span className="font-semibold text-slate-900">{orders.length}</span>{" "}
+          <span className="font-semibold text-slate-900">
+            {pagination?.total ?? orders.length}
+          </span>{" "}
           • Showing:{" "}
           <span className="font-semibold text-slate-900">
             {filtered.length}
@@ -197,7 +115,7 @@ const Orders = () => {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by ID, name or email…"
+              placeholder="Search by ID, name, email or payment…"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-9 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
             <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
@@ -225,7 +143,15 @@ const Orders = () => {
       </div>
 
       {/* Table */}
-      {filtered.length === 0 ? (
+      {ordersLoading ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
+          <p className="text-slate-600">Loading orders…</p>
+        </div>
+      ) : ordersError ? (
+        <div className="rounded-lg border border-rose-200 bg-white p-8 text-center">
+          <p className="text-rose-700">Failed to load: {ordersError}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
           <p className="text-slate-600">No orders found.</p>
           <p className="mt-2 text-sm text-slate-500">
@@ -259,6 +185,9 @@ const Orders = () => {
                   Payment
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  Visit
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Placed
                 </th>
                 <th className="px-4 py-3" />
@@ -266,32 +195,37 @@ const Orders = () => {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {filtered.map((o) => {
-                const t = o.tickets || {};
-                const counts = [
-                  t.adult ? `${t.adult} Adult` : null,
-                  t.child ? `${t.child} Child` : null,
-                  t.senior ? `${t.senior} Senior` : null,
-                ]
-                  .filter(Boolean)
+                const id = o._id;
+                const contact = o.contact || {};
+                const items = Array.isArray(o.items) ? o.items : [];
+                const counts = items
+                  .reduce((acc, it) => {
+                    if (it.ticketType && it.quantity > 0) {
+                      acc.push(
+                        `${it.quantity} ${String(it.ticketType).toLowerCase()}`
+                      );
+                    }
+                    return acc;
+                  }, [])
                   .join(", ");
                 return (
-                  <tr key={o.id} className="hover:bg-slate-50/60">
+                  <tr key={id} className="hover:bg-slate-50/60">
                     <td className="whitespace-nowrap px-4 py-3">
                       <StatusBadge status={o.status || "pending"} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-sm text-slate-900">
-                      {o.id || "-"}
+                      {id || "-"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-900">
-                      {o.name || "-"}
+                      {contact.name || "-"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      {o.email ? (
+                      {contact.email ? (
                         <a
-                          href={`mailto:${o.email}`}
+                          href={`mailto:${contact.email}`}
                           className="text-sky-700 hover:underline"
                         >
-                          {o.email}
+                          {contact.email}
                         </a>
                       ) : (
                         "-"
@@ -301,50 +235,57 @@ const Orders = () => {
                       {counts || "-"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">
-                      {currency(o.total)}
+                      {money(o.totalAmount, o.currency || "INR")}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">
                       {o.paymentMethod || "-"}
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                      {o.visitDate
+                        ? `${o.visitDate} • ${o.visitSlot || "-"}`
+                        : "-"}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                      {o.createdAt || o.date
-                        ? new Date(o.createdAt || o.date).toLocaleString()
+                      {o.createdAt
+                        ? new Date(o.createdAt).toLocaleString()
                         : "-"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-2">
                         {(o.status || "pending") !== "paid" && (
                           <button
-                            onClick={() => handleUpdateStatus(o.id, "paid")}
-                            className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                            onClick={() => handleMarkPaid(id)}
+                            disabled={updatingStatus}
+                            className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                           >
-                            Mark Paid
+                            {updatingStatus ? "Updating…" : "Mark Paid"}
                           </button>
                         )}
                         {(o.status || "pending") !== "cancelled" && (
                           <button
-                            onClick={() =>
-                              handleUpdateStatus(o.id, "cancelled")
-                            }
-                            className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                            onClick={() => handleCancel(id)}
+                            disabled={updatingStatus}
+                            className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                           >
                             Cancel
                           </button>
                         )}
                         {(o.status || "pending") === "paid" && (
                           <button
-                            onClick={() => handleUpdateStatus(o.id, "refunded")}
-                            className="rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+                            onClick={() => handleRefund(id)}
+                            disabled={updatingStatus}
+                            className="rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
                           >
                             Refund
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(o.id)}
-                          className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                          onClick={() => handleDelete(id)}
+                          disabled={deletingId === id}
+                          className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
                           title="Delete order"
                         >
-                          Delete
+                          {deletingId === id ? "Deleting…" : "Delete"}
                         </button>
                       </div>
                     </td>

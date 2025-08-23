@@ -76,7 +76,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     "-passwordHash -refreshToken",
   );
 
-  const cookieOpts = { httpOnly: true, secure: true, sameSite: "strict" };
+  const cookieOpts = { httpOnly: true, secure: true, sameSite: "none" };
   return res
     .status(200)
     .cookie("accessToken", accessToken, cookieOpts)
@@ -98,7 +98,7 @@ export const logoutAdmin = asyncHandler(async (req, res) => {
     { new: true },
   );
 
-  const cookieOpts = { httpOnly: true, secure: true, sameSite: "strict" };
+  const cookieOpts = { httpOnly: true, secure: true, sameSite: "none" };
   return res
     .status(200)
     .clearCookie("accessToken", cookieOpts)
@@ -122,7 +122,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
       admin._id,
     );
 
-    const cookieOpts = { httpOnly: true, secure: true, sameSite: "strict" };
+    const cookieOpts = { httpOnly: true, secure: true, sameSite: "none" };
     return res
       .status(200)
       .cookie("accessToken", accessToken, cookieOpts)

@@ -1,40 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-
-const STORAGE_KEY = "contactMessages";
-
-const loadMessages = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveMessages = (msgs) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
-};
+import { useMessageStore } from "../../../store/useMessageStore.js";
 
 const ViewMessages = () => {
-  const [messages, setMessages] = useState([]);
+  const {
+    messages,
+    loading,
+    error,
+    fetchMessages,
+    deleteMessage,
+    updateMessage,
+    markRead,
+  } = useMessageStore();
+
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    setMessages(
-      loadMessages().sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-    );
-  }, []);
+    fetchMessages({ sort: "-createdAt", limit: 50 });
+  }, [fetchMessages]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return messages;
     return messages.filter((m) =>
-      [m.name, m.email, m.subject, m.message].some((v) =>
+      [m.name, m.email, m.subject, m.body, m.message].some((v) =>
         String(v || "")
           .toLowerCase()
           .includes(q)
@@ -42,30 +31,28 @@ const ViewMessages = () => {
     );
   }, [messages, query]);
 
-  const handleToggleRead = (id) => {
-    setMessages((prev) => {
-      const next = prev.map((m) => (m.id === id ? { ...m, read: !m.read } : m));
-      saveMessages(next);
-      return next;
-    });
+  const handleToggleRead = async (m) => {
+    if (!m?._id) return;
+    if (m.read) {
+      await updateMessage(m._id, { read: false });
+    } else {
+      await markRead(m._id);
+    }
   };
 
-  const handleDelete = (id) => {
-    setMessages((prev) => {
-      const next = prev.filter((m) => m.id !== id);
-      saveMessages(next);
-      return next;
-    });
+  const handleDelete = async (id) => {
+    if (!id) return;
+    await deleteMessage(id);
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (!window.confirm("Clear all messages? This cannot be undone.")) return;
-    localStorage.removeItem(STORAGE_KEY);
-    setMessages([]);
+    await Promise.allSettled(filtered.map((m) => deleteMessage(m._id)));
+    await fetchMessages({ sort: "-createdAt", limit: 50 });
   };
 
   const handleRefresh = () => {
-    setMessages(loadMessages());
+    fetchMessages({ sort: "-createdAt", limit: 50 });
   };
 
   return (
@@ -124,7 +111,15 @@ const ViewMessages = () => {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
+          <p className="text-slate-600">Loading messages…</p>
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-rose-200 bg-white p-8 text-center">
+          <p className="text-rose-700">Failed to load: {error}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
           <p className="text-slate-600">No messages found.</p>
           <p className="mt-2 text-sm text-slate-500">
@@ -163,7 +158,7 @@ const ViewMessages = () => {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {filtered.map((m) => (
-                <tr key={m.id} className="hover:bg-slate-50/60">
+                <tr key={m._id} className="hover:bg-slate-50/60">
                   <td className="whitespace-nowrap px-4 py-3">
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
@@ -195,7 +190,7 @@ const ViewMessages = () => {
                     {m.subject || "-"}
                   </td>
                   <td className="max-w-xl px-4 py-3 text-slate-700">
-                    <p className="line-clamp-3">{m.message || "-"}</p>
+                    <p className="line-clamp-3">{m.body || m.message || "-"}</p>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                     {m.createdAt ? new Date(m.createdAt).toLocaleString() : "-"}
@@ -203,14 +198,14 @@ const ViewMessages = () => {
                   <td className="whitespace-nowrap px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleToggleRead(m.id)}
+                        onClick={() => handleToggleRead(m)}
                         className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                         title={m.read ? "Mark as unread" : "Mark as read"}
                       >
                         {m.read ? "Mark Unread" : "Mark Read"}
                       </button>
                       <button
-                        onClick={() => handleDelete(m.id)}
+                        onClick={() => handleDelete(m._id)}
                         className="rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
                         title="Delete message"
                       >
