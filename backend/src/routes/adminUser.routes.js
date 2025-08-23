@@ -13,7 +13,7 @@ import { requireAdminRole } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.post("/register", verifyJWT, requireAdminRole("owner"), registerAdmin); // restrict in prod
+router.post("/register", registerAdmin); // restrict in prod
 router.post("/login", loginAdmin);
 
 // secured routes

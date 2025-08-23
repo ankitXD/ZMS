@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "../store/useAuthStore.js"; // NEW
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const { authUser } = useAuthStore(); // NEW
+  const isAuthed = !!authUser; // NEW
 
   const linkBase =
     "inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500";
@@ -61,8 +64,12 @@ const Navbar = () => {
             >
               Book Tickets
             </Link>
-            <Link className={`${linkBase} ${linkVariant.admin}`} to="/login">
-              Admin
+            {/* CHANGED: label + destination based on auth */}
+            <Link
+              className={`${linkBase} ${linkVariant.admin}`}
+              to={isAuthed ? "/admin/dashboard" : "/login"}
+            >
+              {isAuthed ? "My Account" : "Admin Login"}
             </Link>
           </nav>
 
@@ -147,12 +154,13 @@ const Navbar = () => {
               >
                 Book Tickets
               </Link>
+              {/* CHANGED: label + destination based on auth */}
               <Link
                 className={`${linkBase} ${linkVariant.admin} justify-center`}
-                to="/login"
+                to={isAuthed ? "/admin/dashboard" : "/login"}
                 onClick={() => setOpen(false)}
               >
-                Admin
+                {isAuthed ? "My Account" : "Admin Login"}
               </Link>
             </div>
           </nav>

@@ -29,7 +29,7 @@ const Header = ({ onToggleSidebar }) => {
 
   const handleLogout = async () => {
     const res = await logoutAdmin(); // CALL API
-    if (res?.ok) navigate("/login", { replace: true });
+    if (res?.ok) navigate("/", { replace: true });
   };
 
   const toggleSidebar = () => {
