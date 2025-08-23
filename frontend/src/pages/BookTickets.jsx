@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useOrderStore } from "../store/useOrderStore.js";
+import toast from "react-hot-toast";
 
 const PRICES = { adult: 20, child: 10, senior: 15 };
 
@@ -10,6 +12,15 @@ const BookTickets = () => {
   const [slot, setSlot] = useState("morning");
   const [qty, setQty] = useState({ adult: 1, child: 0, senior: 0 });
   const [promo, setPromo] = useState("");
+
+  // Contact + payment
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("upi"); // upi|card|cash
+
+  // Store (createOrder calls POST /orders)
+  const { creating, createdOrder, createOrder } = useOrderStore();
 
   // Prefill from URL params if present
   useEffect(() => {
@@ -47,12 +58,57 @@ const BookTickets = () => {
       [key]: Math.max(0, Math.min(10, (q[key] ?? 0) + delta)),
     }));
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    if (!date) return;
-    if (qty.adult + qty.child + qty.senior === 0) return;
-    // Placeholder: integrate your backend checkout here
-    alert("Proceeding to checkout...");
+    if (!date) {
+      toast.error("Please select a date");
+      return;
+    }
+    if (qty.adult + qty.child + qty.senior === 0) {
+      toast.error("Please add at least one ticket");
+      return;
+    }
+    if (!name || !email) {
+      toast.error("Name and email are required");
+      return;
+    }
+
+    const items = [];
+    if (qty.adult > 0)
+      items.push({
+        ticketType: "adult",
+        quantity: qty.adult,
+        unitPrice: PRICES.adult,
+      });
+    if (qty.child > 0)
+      items.push({
+        ticketType: "child",
+        quantity: qty.child,
+        unitPrice: PRICES.child,
+      });
+    if (qty.senior > 0)
+      items.push({
+        ticketType: "senior",
+        quantity: qty.senior,
+        unitPrice: PRICES.senior,
+      });
+
+    const contact = { name, email, phone };
+
+    // Include visitDate and visitSlot as required by backend
+    const res = await createOrder({
+      visitDate: date,
+      visitSlot: slot,
+      contact,
+      items,
+      paymentMethod,
+      currency: "INR",
+    });
+
+    if (res?.ok) {
+      toast.success("Order created. Proceed to payment.");
+      // navigate(`/checkout?orderId=${res.data._id}`);
+    }
   };
 
   return (
@@ -134,6 +190,7 @@ const BookTickets = () => {
                   </select>
                 </label>
 
+                {/* Tickets */}
                 <div className="grid gap-3">
                   {["adult", "child", "senior"].map((k) => (
                     <div
@@ -174,6 +231,52 @@ const BookTickets = () => {
                   ))}
                 </div>
 
+                {/* Contact */}
+                <div className="grid gap-3 border-t border-slate-200 pt-4">
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Contact
+                  </h3>
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">
+                      Full name
+                    </span>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      required
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">
+                      Email
+                    </span>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-medium text-slate-700">
+                      Phone
+                    </span>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="9999999999"
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </label>
+                </div>
+
+                {/* Promo */}
                 <label className="block">
                   <span className="text-sm font-medium text-slate-700">
                     Promo code
@@ -187,6 +290,23 @@ const BookTickets = () => {
                   />
                 </label>
 
+                {/* Payment method */}
+                <label className="block">
+                  <span className="text-sm font-medium text-slate-700">
+                    Payment Method
+                  </span>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="upi">UPI</option>
+                    <option value="card">Card</option>
+                    <option value="cash">Cash (at counter)</option>
+                  </select>
+                </label>
+
+                {/* Totals */}
                 <div className="mt-2 grid gap-1 border-t border-slate-200 pt-3 text-sm">
                   <div className="flex justify-between text-slate-600">
                     <span>Subtotal</span>
@@ -207,14 +327,37 @@ const BookTickets = () => {
                 <button
                   type="submit"
                   className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 disabled:opacity-50"
-                  disabled={!date || qty.adult + qty.child + qty.senior === 0}
+                  disabled={
+                    creating ||
+                    !date ||
+                    qty.adult + qty.child + qty.senior === 0 ||
+                    !name ||
+                    !email
+                  }
                 >
-                  Proceed to Checkout
+                  {creating ? "Creating order..." : "Proceed to Checkout"}
                 </button>
                 <p className="text-xs text-slate-500">
-                  You can review your order on the next step.
+                  Your order will be created as pending. Tickets are issued
+                  after payment.
                 </p>
               </div>
+
+              {/* Confirmation */}
+              {createdOrder && (
+                <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+                  <p className="text-sm">
+                    Order created:{" "}
+                    <span className="font-mono">{createdOrder._id}</span>
+                  </p>
+                  <p className="text-xs mt-1">
+                    Visit: {createdOrder.visitDate} • {createdOrder.visitSlot}
+                  </p>
+                  <p className="text-xs mt-1">
+                    Next: complete payment to receive your QR tickets.
+                  </p>
+                </div>
+              )}
             </form>
 
             {/* Right: Persuasive panel */}

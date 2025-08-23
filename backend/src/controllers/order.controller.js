@@ -6,6 +6,8 @@ import ApiResponse from "../utils/ApiResponse.js";
 import crypto from "crypto";
 import QRCode from "qrcode";
 
+const VISIT_SLOTS = ["morning", "afternoon", "evening"]; // keep in sync with model
+
 // Normalize items and compute totals
 function normalizeItems(items = []) {
   const safeItems = (Array.isArray(items) ? items : []).map((it) => {
@@ -75,19 +77,31 @@ async function generateTicketsForOrder(order) {
 
 // POST /api/orders
 export const createOrder = asyncHandler(async (req, res) => {
-  const { contact, items, paymentMethod, currency = "INR" } = req.body || {};
+  const {
+    contact,
+    items,
+    paymentMethod,
+    currency = "INR",
+    visitDate, // NEW: "YYYY-MM-DD"
+    visitSlot, // NEW: "morning" | "afternoon" | "evening"
+  } = req.body || {};
 
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(visitDate || ""))) {
+    throw new ApiError(400, "visitDate (YYYY-MM-DD) is required");
+  }
+  if (!VISIT_SLOTS.includes(String(visitSlot))) {
+    throw new ApiError(400, "visitSlot must be morning, afternoon, or evening");
+  }
+  if (!contact?.email) throw new ApiError(400, "Contact email is required");
   if (!items || !Array.isArray(items) || items.length === 0) {
     throw new ApiError(400, "At least one ticket item is required");
   }
 
-  // Basic contact validation for public orders (so you can email tickets later)
-  if (!contact?.email) {
-    throw new ApiError(400, "Contact email is required");
-  }
-
   const { items: normalized, totalAmount } = normalizeItems(items);
+
   const order = await Order.create({
+    visitDate,
+    visitSlot,
     contact: {
       name: contact.name?.trim(),
       email: contact.email?.trim()?.toLowerCase(),
@@ -99,6 +113,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     status: "pending",
     paymentMethod: paymentMethod?.trim(),
   });
+
   return res
     .status(201)
     .json(new ApiResponse(201, { order }, "Order created (pending payment)"));
