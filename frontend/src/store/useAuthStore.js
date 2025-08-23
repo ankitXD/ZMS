@@ -1,24 +1,23 @@
 import { create } from "zustand";
-import axiosInstance from "../utils/api";
+import api from "../utils/api";
 import toast from "react-hot-toast";
 
+// Only needed if your backend ALSO supports Bearer headers.
+// Harmless to keep; cookies still do the heavy lifting.
 const setAuthHeader = (token) => {
-  if (token) {
-    axiosInstance.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    delete axiosInstance.defaults.headers.common.Authorization;
-  }
+  if (token) api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  else delete api.defaults.headers.common.Authorization;
 };
 
 export const useAuthStore = create((set, get) => ({
-  // Core state
+  // core
   me: null,
-  authUser: null, // alias used by template
+  authUser: null,
   loading: false,
   error: null,
 
-  // Template loader flag
-  isAuthCheck: false, // used by template
+  // 🔥 start true so first paint waits for session restore
+  isAuthCheck: true,
 
   loggingIn: false,
   loginError: null,
@@ -35,23 +34,21 @@ export const useAuthStore = create((set, get) => ({
     return roles.length ? roles.includes(me.role) : !!me.role;
   },
 
-  // Template method: checks auth on app start
+  // boot-time auth check (cookie → /current-user → fallback refresh)
   checkAuth: async () => {
     set({ isAuthCheck: true });
     try {
-      // Try current-user
-      const res = await axiosInstance.get("/admin/current-user");
+      const res = await api.get("/admin/current-user");
       const admin = res?.data?.data?.admin || res?.data?.data || null;
       set({ me: admin, authUser: admin });
       return { ok: true, data: admin };
     } catch {
-      // Try refresh, then current-user again
       try {
-        const r = await axiosInstance.post("/admin/refresh");
+        const r = await api.post("/admin/refresh");
         const token =
           r?.data?.data?.accessToken || r?.data?.accessToken || r?.data?.token;
         if (token) setAuthHeader(token);
-        const res2 = await axiosInstance.get("/admin/current-user");
+        const res2 = await api.get("/admin/current-user");
         const admin = res2?.data?.data?.admin || res2?.data?.data || null;
         set({ me: admin, authUser: admin });
         return { ok: true, data: admin };
@@ -67,7 +64,7 @@ export const useAuthStore = create((set, get) => ({
   fetchCurrentAdmin: async () => {
     set({ loading: true, error: null });
     try {
-      const { data } = await axiosInstance.get("/admin/current-user");
+      const { data } = await api.get("/admin/current-user");
       const admin = data?.data?.admin || data?.data || null;
       set({ me: admin, authUser: admin });
       return { ok: true, data: admin };
@@ -82,7 +79,7 @@ export const useAuthStore = create((set, get) => ({
 
   refreshAccessToken: async () => {
     try {
-      const { data } = await axiosInstance.post("/admin/refresh");
+      const { data } = await api.post("/admin/refresh");
       const token =
         data?.data?.accessToken || data?.accessToken || data?.token || null;
       if (token) setAuthHeader(token);
@@ -100,10 +97,7 @@ export const useAuthStore = create((set, get) => ({
     }
     set({ loggingIn: true, loginError: null });
     try {
-      const { data } = await axiosInstance.post("/admin/login", {
-        email,
-        password,
-      });
+      const { data } = await api.post("/admin/login", { email, password });
       const admin = data?.data?.admin || data?.data || null;
       const token =
         data?.data?.accessToken || data?.accessToken || data?.token || null;
@@ -124,7 +118,7 @@ export const useAuthStore = create((set, get) => ({
   logoutAdmin: async () => {
     set({ logoutLoading: true });
     try {
-      await axiosInstance.post("/admin/logout");
+      await api.post("/admin/logout"); // server clears cookies
       setAuthHeader(null);
       set({ me: null, authUser: null });
       toast.success("Signed out");
@@ -141,10 +135,7 @@ export const useAuthStore = create((set, get) => ({
   updateAccount: async (payload) => {
     set({ updating: true, updateError: null });
     try {
-      const { data } = await axiosInstance.patch(
-        "/admin/update-account",
-        payload
-      );
+      const { data } = await api.patch("/admin/update-account", payload);
       const updated = data?.data?.admin || data?.data || get().me;
       set({ me: updated, authUser: updated });
       toast.success("Profile updated");
@@ -162,10 +153,7 @@ export const useAuthStore = create((set, get) => ({
   changePassword: async ({ oldPassword, newPassword }) => {
     set({ changingPassword: true });
     try {
-      await axiosInstance.post("/admin/change-password", {
-        oldPassword,
-        newPassword,
-      });
+      await api.post("/admin/change-password", { oldPassword, newPassword });
       toast.success("Password changed");
       return { ok: true };
     } catch (e) {
@@ -180,7 +168,7 @@ export const useAuthStore = create((set, get) => ({
   registerAdmin: async ({ name, email, password, role = "admin" }) => {
     set({ registering: true, registerError: null });
     try {
-      const { data } = await axiosInstance.post("/admin/register", {
+      const { data } = await api.post("/admin/register", {
         name,
         email,
         password,

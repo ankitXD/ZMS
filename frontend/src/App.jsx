@@ -49,7 +49,7 @@ function App() {
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
   if (isAuthCheck) return <AuthLoader />;
 
