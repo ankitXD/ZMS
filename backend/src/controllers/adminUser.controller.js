@@ -171,3 +171,77 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, {}, "Password changed"));
 });
+
+// GET /api/admin/admins
+// Returns paginated list of admins limited to roles: owner, admin, editor
+export const getAllAdmins = asyncHandler(async (req, res) => {
+  const {
+    q, // search by name/email
+    role, // e.g. "owner,admin"
+    status, // e.g. "active,disabled"
+    page = 1,
+    limit = 20,
+    sort = "-createdAt",
+  } = req.query;
+
+  const roles = (role ? String(role) : "owner,admin,editor")
+    .split(",")
+    .map((r) => r.trim().toLowerCase())
+    .filter(Boolean);
+
+  const filter = { role: { $in: roles } };
+
+  if (status) {
+    filter.status = {
+      $in: String(status)
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean),
+    };
+  }
+
+  if (q) {
+    const rx = new RegExp(String(q).trim(), "i");
+    filter.$or = [{ name: rx }, { email: rx }];
+  }
+
+  const p = Math.max(1, parseInt(page, 10) || 1);
+  const l = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+
+  const sortObj = (() => {
+    if (!sort) return { createdAt: -1 };
+    // support "-createdAt,name"
+    const fields = String(sort)
+      .split(",")
+      .map((s) => s.trim());
+    return fields.reduce((acc, f) => {
+      if (!f) return acc;
+      if (f.startsWith("-")) acc[f.slice(1)] = -1;
+      else acc[f] = 1;
+      return acc;
+    }, {});
+  })();
+
+  const [items, total] = await Promise.all([
+    AdminUser.find(filter)
+      .select("-passwordHash -refreshToken")
+      .sort(sortObj)
+      .skip((p - 1) * l)
+      .limit(l),
+    AdminUser.countDocuments(filter),
+  ]);
+
+  const payload = {
+    items,
+    pagination: {
+      total,
+      page: p,
+      limit: l,
+      pages: Math.ceil(total / l) || 1,
+    },
+  };
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, payload, "Admins fetched successfully"));
+});

@@ -86,12 +86,6 @@ const Login = () => {
               />
               Remember me
             </label>
-            <Link
-              to="/admin/forgot"
-              className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
-            >
-              Forgot password?
-            </Link>
           </div>
 
           <button
@@ -102,7 +96,7 @@ const Login = () => {
             {loggingIn ? "Signing in…" : "Sign In"}
           </button>
 
-          <p className="text-center text-sm text-slate-600">
+          {/* <p className="text-center text-sm text-slate-600">
             Don’t have an account?{" "}
             <Link
               to="/signup"
@@ -110,7 +104,7 @@ const Login = () => {
             >
               Create one
             </Link>
-          </p>
+          </p> */}
         </form>
       </div>
     </main>

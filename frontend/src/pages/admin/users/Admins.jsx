@@ -1,67 +1,43 @@
 import React, { useEffect, useMemo, useState } from "react";
-
-const ADMIN_USERS_KEY = "adminUsers";
-
-const loadAdmins = () => {
-  try {
-    const raw = localStorage.getItem(ADMIN_USERS_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveAdmins = (list) => {
-  localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(list));
-};
-
-const uuid = () =>
-  (window.crypto?.randomUUID && crypto.randomUUID()) ||
-  `adm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+import { useAdminsStore } from "../../../store/useAdminsStore.js";
 
 const emailOk = (val) => /\S+@\S+\.\S+/.test(val);
 
 const Admins = () => {
-  const [admins, setAdmins] = useState([]);
+  const {
+    canRegisterUsers,
+    canSeeAdmins,
+    registerAdmin,
+    fetchAdmins,
+    admins,
+    listLoading,
+    listError,
+    pagination,
+  } = useAdminsStore();
+
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("staff");
+  const [role, setRole] = useState("editor"); // owner | admin | editor
   const [active, setActive] = useState(true);
+  const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    let list = loadAdmins();
-    if (list.length === 0) {
-      list = [
-        {
-          id: uuid(),
-          name: "Administrator",
-          email: "admin@example.com",
-          role: "superadmin",
-          active: true,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      saveAdmins(list);
+    if (canSeeAdmins()) {
+      fetchAdmins({ sort: "-createdAt", page: 1, limit: 20 });
     }
-    setAdmins(
-      list.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-    );
-  }, []);
+  }, [canSeeAdmins, fetchAdmins]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return admins;
-    return admins.filter((u) =>
+    const list = Array.isArray(admins) ? admins : [];
+    if (!q) return list;
+    return list.filter((u) =>
       [u.name, u.email, u.role].some((v) =>
         String(v || "")
           .toLowerCase()
@@ -74,8 +50,9 @@ const Admins = () => {
     setEditingId(null);
     setName("");
     setEmail("");
-    setRole("staff");
+    setRole("editor");
     setActive(true);
+    setPassword("");
     setMsg("");
   };
 
@@ -85,11 +62,12 @@ const Admins = () => {
   };
 
   const startEdit = (u) => {
-    setEditingId(u.id);
+    setEditingId(u._id);
     setName(u.name || "");
     setEmail(u.email || "");
-    setRole(u.role || "staff");
-    setActive(!!u.active);
+    setRole(u.role || "editor");
+    setActive(u.active ?? true);
+    setPassword("");
     setMsg("");
     setShowForm(true);
   };
@@ -97,80 +75,49 @@ const Admins = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
+
     if (!name.trim()) return setMsg("Name is required.");
     if (!emailOk(email)) return setMsg("Enter a valid email.");
-    const duplicate = admins.some(
-      (u) =>
-        u.email.toLowerCase() === email.trim().toLowerCase() &&
-        u.id !== editingId
-    );
-    if (duplicate) return setMsg("Email already exists.");
 
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
 
-    setAdmins((prev) => {
-      let next;
-      if (editingId) {
-        next = prev.map((u) =>
-          u.id === editingId
-            ? { ...u, name: name.trim(), email: email.trim(), role, active }
-            : u
-        );
-      } else {
-        const newUser = {
-          id: uuid(),
-          name: name.trim(),
-          email: email.trim(),
-          role,
-          active,
-          createdAt: new Date().toISOString(),
-        };
-        next = [newUser, ...prev];
+    // Create via API (Owner only)
+    if (!editingId) {
+      if (!canRegisterUsers()) {
+        setSaving(false);
+        return setMsg("Only Owner can create admins.");
       }
-      saveAdmins(next);
-      return next;
-    });
+      if (!password || password.length < 6) {
+        setSaving(false);
+        return setMsg("Password must be at least 6 characters.");
+      }
 
+      const res = await registerAdmin({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        role,
+      });
+
+      if (!res?.ok) {
+        setSaving(false);
+        return setMsg(res?.message || "Create failed.");
+      }
+
+      await fetchAdmins({ sort: "-createdAt", page: 1, limit: 20 });
+      setSaving(false);
+      setShowForm(false);
+      resetForm();
+      return;
+    }
+
+    // Edit flow not wired to API yet
     setSaving(false);
-    setShowForm(false);
-    resetForm();
+    setMsg("Edit coming soon.");
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm("Delete this admin?")) return;
-    setAdmins((prev) => {
-      const next = prev.filter((u) => u.id !== id);
-      saveAdmins(next);
-      return next;
-    });
-  };
-
-  const handleToggleActive = (id) => {
-    setAdmins((prev) => {
-      const next = prev.map((u) =>
-        u.id === id ? { ...u, active: !u.active } : u
-      );
-      saveAdmins(next);
-      return next;
-    });
-  };
-
-  const seedDemo = () => {
-    const demo = [
-      { name: "Aarav Mehta", email: "aarav@example.com", role: "manager" },
-      { name: "Diya Kapoor", email: "diya@example.com", role: "staff" },
-      { name: "Kabir Singh", email: "kabir@example.com", role: "staff" },
-    ].map((d, i) => ({
-      id: uuid(),
-      ...d,
-      active: true,
-      createdAt: new Date(Date.now() - i * 3600_000).toISOString(),
-    }));
-    const merged = [...demo, ...admins];
-    setAdmins(merged);
-    saveAdmins(merged);
-  };
+  const handleRefresh = () =>
+    fetchAdmins({ sort: "-createdAt", page: 1, limit: 20 });
 
   return (
     <div className="space-y-6">
@@ -184,25 +131,43 @@ const Admins = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={seedDemo}
+            onClick={handleRefresh}
             className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            Seed Demo
+            Refresh
           </button>
           <button
             onClick={startAdd}
-            className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            disabled={!canRegisterUsers()}
+            className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            title={
+              !canRegisterUsers() ? "Only Owner can add admins" : "Add Admin"
+            }
           >
             Add Admin
           </button>
         </div>
       </div>
 
+      {/* Loading / Error */}
+      {listLoading && (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          Loading admins…
+        </div>
+      )}
+      {listError && (
+        <div className="rounded-lg border border-rose-200 bg-white p-4 text-sm text-rose-700">
+          {listError}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-slate-600">
           Total:{" "}
-          <span className="font-semibold text-slate-900">{admins.length}</span>{" "}
+          <span className="font-semibold text-slate-900">
+            {pagination?.total ?? admins.length}
+          </span>{" "}
           • Showing:{" "}
           <span className="font-semibold text-slate-900">
             {filtered.length}
@@ -234,6 +199,11 @@ const Admins = () => {
           <h2 className="text-lg font-semibold text-slate-900">
             {editingId ? "Edit Admin" : "Add Admin"}
           </h2>
+          {!editingId && !canRegisterUsers() && (
+            <p className="mt-2 text-sm text-rose-700">
+              Only Owner can create new admins.
+            </p>
+          )}
           <form
             onSubmit={handleSubmit}
             className="mt-4 grid gap-4 sm:grid-cols-2"
@@ -271,6 +241,27 @@ const Admins = () => {
                 required
               />
             </div>
+
+            {!editingId && (
+              <div className="sm:col-span-1">
+                <label
+                  className="block text-sm font-medium text-slate-700"
+                  htmlFor="password"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  placeholder="Min 6 characters"
+                  required
+                />
+              </div>
+            )}
+
             <div className="sm:col-span-1">
               <label
                 className="block text-sm font-medium text-slate-700"
@@ -284,11 +275,12 @@ const Admins = () => {
                 onChange={(e) => setRole(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               >
-                <option value="superadmin">Super Admin</option>
-                <option value="manager">Manager</option>
-                <option value="staff">Staff</option>
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="editor">Editor</option>
               </select>
             </div>
+
             <div className="sm:col-span-1 flex items-end">
               <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                 <input
@@ -318,7 +310,7 @@ const Admins = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || (!editingId && !canRegisterUsers())}
                   className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {saving
@@ -358,7 +350,7 @@ const Admins = () => {
           </thead>
           <tbody className="divide-y divide-slate-200">
             {filtered.map((u) => (
-              <tr key={u.id} className="hover:bg-slate-50/60">
+              <tr key={u._id} className="hover:bg-slate-50/60">
                 <td className="whitespace-nowrap px-4 py-3">
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ${
@@ -390,23 +382,12 @@ const Admins = () => {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleToggleActive(u.id)}
-                      className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      {u.active ? "Disable" : "Enable"}
-                    </button>
+                    {/* Actions to be wired when backend endpoints are ready */}
                     <button
                       onClick={() => startEdit(u)}
                       className="rounded-md bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"
                     >
                       Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(u.id)}
-                      className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
-                    >
-                      Delete
                     </button>
                   </div>
                 </td>
@@ -418,7 +399,7 @@ const Admins = () => {
                   className="px-4 py-6 text-center text-slate-600"
                   colSpan={6}
                 >
-                  No admins found.
+                  {listLoading ? "Loading…" : "No admins found."}
                 </td>
               </tr>
             )}
