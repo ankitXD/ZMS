@@ -106,9 +106,14 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Signed in");
       return { ok: true, data: admin };
     } catch (e) {
-      const msg = e?.response?.data?.message || e.message;
+      const status = e?.response?.status;
+      let msg = e?.response?.data?.message || e.message;
+      // Map invalid creds responses to a friendly message
+      if (status === 401 || status === 404) {
+        msg = "Invalid credentials";
+      }
       set({ loginError: msg, me: null, authUser: null });
-      toast.error(`Login failed: ${msg}`);
+      toast.error(msg);
       return { ok: false, message: msg };
     } finally {
       set({ loggingIn: false });
