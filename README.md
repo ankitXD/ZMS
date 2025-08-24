@@ -2,7 +2,7 @@
 
 ZMS is a full‑stack web app for a zoo website. It includes a public frontend (animals, tickets, contact) and an admin backend (animals CRUD, orders with QR tickets, messages inbox, admin auth with RBAC).
 
-## Current Status (Aug 2025)
+## Current Status (24 Aug 2025)
 
 - Auth & RBAC (backend)
 
@@ -123,7 +123,9 @@ ZMS is a full‑stack web app for a zoo website. It includes a public frontend (
 - REFRESH_TOKEN_SECRET=...
 - ACCESS_TOKEN_EXPIRY=15m
 - REFRESH_TOKEN_EXPIRY=7d
-- CLOUDINARY\_\*
+- CLOUDINARY_CLOUD_NAME=
+- CLOUDINARY_API_KEY=
+- CLOUDINARY_API_SECRET=
 - CORS_ORIGIN=http://localhost:5173
 
 2. Install and run (Windows PowerShell)
