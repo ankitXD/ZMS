@@ -7,12 +7,18 @@ const Admins = () => {
   const {
     canRegisterUsers,
     canSeeAdmins,
+    canEditAdmins,
+    canDeleteAdmins,
     registerAdmin,
     fetchAdmins,
+    updateAdmin,
+    deleteAdmin,
     admins,
     listLoading,
     listError,
     pagination,
+    updatingId,
+    deletingId,
   } = useAdminsStore();
 
   const [query, setQuery] = useState("");
@@ -33,17 +39,31 @@ const Admins = () => {
     }
   }, [canSeeAdmins, fetchAdmins]);
 
+  const rolePriority = {
+    owner: 1,
+    admin: 2,
+    editor: 3,
+  };
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = Array.isArray(admins) ? admins : [];
-    if (!q) return list;
-    return list.filter((u) =>
-      [u.name, u.email, u.role].some((v) =>
-        String(v || "")
-          .toLowerCase()
-          .includes(q)
-      )
-    );
+
+    const searched = q
+      ? list.filter((u) =>
+          [u.name, u.email, u.role].some((v) =>
+            String(v || "")
+              .toLowerCase()
+              .includes(q)
+          )
+        )
+      : list;
+
+    return searched.sort((a, b) => {
+      const pa = rolePriority[a.role?.toLowerCase()] ?? 99;
+      const pb = rolePriority[b.role?.toLowerCase()] ?? 99;
+      return pa - pb;
+    });
   }, [admins, query]);
 
   const resetForm = () => {
@@ -61,12 +81,19 @@ const Admins = () => {
     setShowForm(true);
   };
 
+  const isActive = (u) => {
+    if (typeof u?.active === "boolean") return u.active;
+    if (typeof u?.isActive === "boolean") return u.isActive;
+    const s = String(u?.status || "").toLowerCase();
+    return s ? s === "active" || s === "enabled" : true;
+  };
+
   const startEdit = (u) => {
     setEditingId(u._id);
     setName(u.name || "");
     setEmail(u.email || "");
     setRole(u.role || "editor");
-    setActive(u.active ?? true);
+    setActive(isActive(u));
     setPassword("");
     setMsg("");
     setShowForm(true);
@@ -111,9 +138,36 @@ const Admins = () => {
       return;
     }
 
-    // Edit flow not wired to API yet
+    // Edit via API (Admin/Owner; role/status changes enforced by backend)
+    if (!canEditAdmins()) {
+      setSaving(false);
+      return setMsg("You do not have permission to edit admins.");
+    }
+
+    const payload = {
+      name: name.trim(),
+      email: email.trim(),
+      role,
+      // backend accepts either status or active; send active for simplicity
+      active,
+    };
+
+    const res = await updateAdmin(editingId, payload);
+    if (!res?.ok) {
+      setSaving(false);
+      return setMsg(res?.message || "Update failed.");
+    }
+
     setSaving(false);
-    setMsg("Edit coming soon.");
+    setShowForm(false);
+    resetForm();
+  };
+
+  const handleDelete = async (id) => {
+    if (!canDeleteAdmins()) return setMsg("Only Owner can delete admins.");
+    if (!window.confirm("Delete this admin?")) return;
+    const res = await deleteAdmin(id);
+    if (!res?.ok) setMsg(res?.message || "Delete failed.");
   };
 
   const handleRefresh = () =>
@@ -310,13 +364,19 @@ const Admins = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || (!editingId && !canRegisterUsers())}
+                  disabled={
+                    saving ||
+                    (!editingId && !canRegisterUsers()) ||
+                    (editingId && !canEditAdmins())
+                  }
                   className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {saving
                     ? "Saving..."
                     : editingId
-                      ? "Save Changes"
+                      ? updatingId === editingId
+                        ? "Saving..."
+                        : "Save Changes"
                       : "Create Admin"}
                 </button>
               </div>
@@ -349,50 +409,62 @@ const Admins = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {filtered.map((u) => (
-              <tr key={u._id} className="hover:bg-slate-50/60">
-                <td className="whitespace-nowrap px-4 py-3">
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ${
-                      u.active
-                        ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                        : "bg-slate-100 text-slate-700 ring-slate-300"
-                    }`}
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                    {u.active ? "Active" : "Disabled"}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-900">
-                  {u.name}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <a
-                    href={`mailto:${u.email}`}
-                    className="text-sky-700 hover:underline"
-                  >
-                    {u.email}
-                  </a>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 capitalize text-slate-900">
-                  {u.role}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                  {u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    {/* Actions to be wired when backend endpoints are ready */}
-                    <button
-                      onClick={() => startEdit(u)}
-                      className="rounded-md bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"
+            {filtered.map((u) => {
+              const activeNow = isActive(u);
+              return (
+                <tr key={u._id} className="hover:bg-slate-50/60">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ${
+                        activeNow
+                          ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                          : "bg-slate-100 text-slate-700 ring-slate-300"
+                      }`}
                     >
-                      Edit
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                      {activeNow ? "Active" : "Disabled"}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-900">
+                    {u.name}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <a
+                      href={`mailto:${u.email}`}
+                      className="text-sky-700 hover:underline"
+                    >
+                      {u.email}
+                    </a>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 capitalize text-slate-900">
+                    {u.role}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => startEdit(u)}
+                        className="rounded-md bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"
+                        disabled={!canEditAdmins()}
+                        title={!canEditAdmins() ? "No permission" : "Edit"}
+                      >
+                        {updatingId === u._id ? "Saving..." : "Edit"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(u._id)}
+                        className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                        disabled={!canDeleteAdmins() || deletingId === u._id}
+                        title={!canDeleteAdmins() ? "Owner only" : "Delete"}
+                      >
+                        {deletingId === u._id ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td

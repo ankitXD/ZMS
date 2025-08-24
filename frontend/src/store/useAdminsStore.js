@@ -9,7 +9,9 @@ import { useAuthStore } from "../store/useAuthStore";
 // - Account: admin/owner can update profile; all logged-in roles can change password
 export const PERMISSIONS = {
   "admin.register": ["owner"],
-  "admins.read": ["owner", "admin"], // NEW
+  "admins.read": ["owner", "admin"],
+  "admins.update": ["owner", "admin"], // NEW
+  "admins.delete": ["owner"], // NEW
 
   "animals.create:text": ["owner", "admin", "editor"],
   "animals.create:file": ["owner", "admin"],
@@ -30,6 +32,18 @@ export const PERMISSIONS = {
 const getCurrentRole = () =>
   (useAuthStore.getState()?.authUser?.role || "guest").toLowerCase();
 
+const normalizeAdmin = (u) => ({
+  ...u,
+  active:
+    typeof u?.active === "boolean"
+      ? u.active
+      : typeof u?.isActive === "boolean"
+        ? u.isActive
+        : typeof u?.status === "string"
+          ? u.status.toLowerCase() === "active"
+          : true,
+});
+
 export const useAdminsStore = create((set, get) => ({
   // Derived role (read from auth store on demand)
   role: () => getCurrentRole(),
@@ -43,7 +57,9 @@ export const useAdminsStore = create((set, get) => ({
   },
   // Convenience helpers for common UI gates
   canRegisterUsers: () => get().can("admin.register"),
-  canSeeAdmins: () => get().can("admins.read"), // NEW
+  canSeeAdmins: () => get().can("admins.read"),
+  canEditAdmins: () => get().can("admins.update"), // NEW
+  canDeleteAdmins: () => get().can("admins.delete"), // NEW
   canUploadAnimalImage: () => get().can("animals.create:file"),
   canEditAnimalText: () => get().can("animals.update:text"),
   canDeleteAnimal: () => get().can("animals.delete"),
@@ -53,15 +69,17 @@ export const useAdminsStore = create((set, get) => ({
   canUpdateAccount: () => get().can("account.update"),
 
   // List state (admins)
-  admins: [], // NEW
-  pagination: null, // NEW { total, page, limit, pages }
-  listLoading: false, // NEW
-  listError: null, // NEW
+  admins: [],
+  pagination: null, // { total, page, limit, pages }
+  listLoading: false,
+  listError: null,
 
   // Loading/error states
   registering: false,
   updatingAccount: false,
   changingPassword: false,
+  updatingId: null, // NEW
+  deletingId: null, // NEW
   error: null,
 
   // API: GET all admins (owner/admin)
@@ -81,8 +99,10 @@ export const useAdminsStore = create((set, get) => ({
         params: { ...defaultParams, ...params },
       });
       const payload = data?.data || {};
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      const normalized = items.map(normalizeAdmin);
       set({
-        admins: payload.items || [],
+        admins: normalized,
         pagination: payload.pagination || null,
       });
       return { ok: true, data: payload, message: data?.message };
@@ -95,7 +115,7 @@ export const useAdminsStore = create((set, get) => ({
     }
   },
 
-  resetAdmins: () => set({ admins: [], pagination: null, listError: null }), // NEW
+  resetAdmins: () => set({ admins: [], pagination: null, listError: null }),
 
   // API: Owner-only — register a new admin user
   registerAdmin: async ({ name, email, password, role = "admin" }) => {
@@ -123,6 +143,60 @@ export const useAdminsStore = create((set, get) => ({
       return { ok: false, message: msg };
     } finally {
       set({ registering: false });
+    }
+  },
+
+  // API: Update an admin (admin/owner)
+  updateAdmin: async (id, payload) => {
+    if (!get().can("admins.update")) {
+      return { ok: false, message: "Forbidden: insufficient role" };
+    }
+    if (!id) return { ok: false, message: "Admin id is required" };
+    set({ updatingId: id, error: null });
+    try {
+      const { data } = await axiosInstance.patch(
+        `/admin/admins/${id}`,
+        payload
+      );
+      const updated = normalizeAdmin(data?.data || {});
+      set((state) => ({
+        admins: state.admins.map((u) =>
+          u._id === id ? { ...u, ...updated } : u
+        ),
+      }));
+      return { ok: true, data: updated, message: data?.message || "Updated" };
+    } catch (e) {
+      const msg = e?.response?.data?.message || e.message;
+      set({ error: msg });
+      return { ok: false, message: msg };
+    } finally {
+      set({ updatingId: null });
+    }
+  },
+
+  // API: Delete an admin (owner-only)
+  deleteAdmin: async (id) => {
+    if (!get().can("admins.delete")) {
+      return { ok: false, message: "Forbidden: only owner can delete admins" };
+    }
+    if (!id) return { ok: false, message: "Admin id is required" };
+    set({ deletingId: id, error: null });
+    try {
+      const { data } = await axiosInstance.delete(`/admin/admins/${id}`);
+      set((state) => ({
+        admins: state.admins.filter((u) => u._id !== id),
+      }));
+      return {
+        ok: true,
+        data: data?.data || { _id: id },
+        message: data?.message || "Deleted",
+      };
+    } catch (e) {
+      const msg = e?.response?.data?.message || e.message;
+      set({ error: msg });
+      return { ok: false, message: msg };
+    } finally {
+      set({ deletingId: null });
     }
   },
 

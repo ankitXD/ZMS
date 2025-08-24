@@ -245,3 +245,105 @@ export const getAllAdmins = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, payload, "Admins fetched successfully"));
 });
+
+// PATCH /api/admin/admins/:id
+// Admin/Owner can update admins; only Owner can change roles or modify Owner accounts
+export const updateAdminById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, email, role, status, active } = req.body;
+
+  const requester = req.user; // from verifyJWT
+  const requesterRole = String(requester?.role || "").toLowerCase();
+
+  const target = await AdminUser.findById(id);
+  if (!target) throw new ApiError(404, "Admin not found");
+
+  const targetRole = String(target.role || "").toLowerCase();
+
+  // If touching an owner account or changing role => only owner can do this
+  const roleChanging =
+    typeof role === "string" && role.toLowerCase() !== targetRole;
+  const touchingOwner =
+    targetRole === "owner" ||
+    (typeof role === "string" && role.toLowerCase() === "owner");
+
+  if ((roleChanging || touchingOwner) && requesterRole !== "owner") {
+    throw new ApiError(403, "Only owner can modify owner role or change roles");
+  }
+
+  // Email uniqueness check
+  if (email) {
+    const exists = await AdminUser.findOne({ email, _id: { $ne: id } });
+    if (exists)
+      throw new ApiError(409, "Another admin already uses this email");
+  }
+
+  // Normalize status
+  let nextStatus = status;
+  if (typeof active === "boolean" && !status) {
+    nextStatus = active ? "active" : "disabled";
+  }
+  if (nextStatus) {
+    const s = String(nextStatus).toLowerCase();
+    if (!["active", "disabled"].includes(s)) {
+      throw new ApiError(400, "Status must be 'active' or 'disabled'");
+    }
+    // Only owner can disable/enable an owner account
+    if (targetRole === "owner" && requesterRole !== "owner") {
+      throw new ApiError(403, "Only owner can change owner status");
+    }
+  }
+
+  const allowed = {};
+  if (typeof name === "string") allowed.name = name;
+  if (typeof email === "string") allowed.email = email;
+  if (typeof role === "string") allowed.role = role.toLowerCase();
+  if (nextStatus) allowed.status = String(nextStatus).toLowerCase();
+
+  if (Object.keys(allowed).length === 0) {
+    throw new ApiError(400, "No valid fields to update");
+  }
+
+  const updated = await AdminUser.findByIdAndUpdate(
+    id,
+    { $set: allowed },
+    { new: true },
+  ).select("-passwordHash -refreshToken");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updated, "Admin updated successfully"));
+});
+
+// DELETE /api/admin/admins/:id
+// Only Owner can delete admins. Cannot delete the last owner or self (safety).
+export const deleteAdminById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const requester = req.user;
+  const requesterRole = String(requester?.role || "").toLowerCase();
+
+  if (requesterRole !== "owner") {
+    throw new ApiError(403, "Only owner can delete admins");
+  }
+  if (String(requester?._id) === String(id)) {
+    throw new ApiError(400, "You cannot delete your own account");
+  }
+
+  const target = await AdminUser.findById(id);
+  if (!target) throw new ApiError(404, "Admin not found");
+
+  const targetRole = String(target.role || "").toLowerCase();
+  if (targetRole === "owner") {
+    const owners = await AdminUser.countDocuments({ role: "owner" });
+    if (owners <= 1) {
+      throw new ApiError(409, "Cannot delete the last owner account");
+    }
+  }
+
+  await AdminUser.findByIdAndDelete(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { _id: id }, "Admin deleted successfully"));
+});
