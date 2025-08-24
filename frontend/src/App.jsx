@@ -14,7 +14,6 @@ import ScrollToTop, { BackToTopButton } from "./components/ScrollToTop";
 
 import AdminLayout from "../src/pages/admin/Layout/AdminLayout";
 import Login from "../src/pages/admin/auth/Login";
-import SignUp from "../src/pages/admin/auth/SignUp";
 import Dashboard from "../src/pages/admin/dashboard/Dashboard";
 import ViewAnimals from "../src/pages/admin/animals/ViewAnimals";
 import AddAnimals from "../src/pages/admin/animals/AddAnimals";
@@ -69,7 +68,6 @@ function App() {
         </Route>
 
         <Route path="login" element={<Login />} />
-        <Route path="signup" element={<SignUp />} />
 
         <Route
           path="/admin/dashboard"
