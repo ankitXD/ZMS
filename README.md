@@ -90,7 +90,7 @@ A Postman collection is included to test the API quickly.
 
   1. Open Postman and click Import.
   2. Import the collection JSON (and the environment if provided).
-  3. Set baseUrl in environment to your API origin, e.g. http://localhost:5000/api.
+  3. Set baseUrl in environment to your API origin, e.g. http://localhost:8000/api/v1.
   4. Use the Admin -> Login request to authenticate; enable cookie persistence so Postman stores auth cookies.
   5. Run admin lists/CRUD, animals, orders, and messages endpoints from the collection.
 
