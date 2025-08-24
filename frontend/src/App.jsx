@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore.js";
 import Layout from "./components/Layout";
 import LandingPage from "../src/pages/LandingPage";
@@ -45,10 +45,20 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   const { isAuthCheck, checkAuth } = useAuthStore();
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Set browser tab title
+  useEffect(() => {
+    if (location.pathname.startsWith("/admin/dashboard")) {
+      document.title = "Admin Dashboard";
+    } else {
+      document.title = "ZMS";
+    }
+  }, [location.pathname]);
 
   if (isAuthCheck) return <AuthLoader />;
 
