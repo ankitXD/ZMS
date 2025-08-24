@@ -2,6 +2,12 @@
 
 ZMS is a full‑stack web app for a zoo website. It includes a public frontend (animals, tickets, contact) and an admin backend (animals CRUD, orders with QR tickets, messages inbox, admin auth with RBAC).
 
+## Demo Video
+
+Watch a short walkthrough of the app:
+
+- https://youtu.be/N60zMG09a_s
+
 ## Current Status (24 Aug 2025)
 
 - Auth & RBAC (backend)
@@ -68,6 +74,28 @@ ZMS is a full‑stack web app for a zoo website. It includes a public frontend (
   - Animals CRUD with optional image upload (Multer + Cloudinary)
   - Orders: list, table view, status updates to paid (QR generation)
   - Messages inbox: list, detail, update (status/assignee), mark read, archive, delete
+
+## Demo & API Testing
+
+### Postman Collection
+
+A Postman collection is included to test the API quickly.
+
+- Files:
+
+  - ZMS.postman_collection.json
+  - ZMS.postman_environment.json (optional)
+
+- How to use:
+
+  1. Open Postman and click Import.
+  2. Import the collection JSON (and the environment if provided).
+  3. Set baseUrl in environment to your API origin, e.g. http://localhost:5000/api.
+  4. Use the Admin -> Login request to authenticate; enable cookie persistence so Postman stores auth cookies.
+  5. Run admin lists/CRUD, animals, orders, and messages endpoints from the collection.
+
+- Notes:
+  - Admin routes rely on cookies (access/refresh tokens). If you test with Bearer tokens, also set the Authorization header as needed.
 
 ## Auth & RBAC
 
