@@ -1,102 +1,94 @@
 import React, { useEffect, useState } from "react";
-
-const ADMIN_PROFILE_KEY = "adminProfile";
-const ADMIN_PASSWORD_KEY = "adminPassword";
-
-const loadProfile = () => {
-  try {
-    const raw = localStorage.getItem(ADMIN_PROFILE_KEY);
-    const data = raw ? JSON.parse(raw) : null;
-    if (data && typeof data === "object") return data;
-  } catch {}
-  return { name: "Administrator", email: "admin@example.com" };
-};
-
-const saveProfile = (profile) => {
-  localStorage.setItem(ADMIN_PROFILE_KEY, JSON.stringify(profile));
-};
-
-const loadPassword = () => localStorage.getItem(ADMIN_PASSWORD_KEY) || "";
-
-const savePassword = (pwd) => localStorage.setItem(ADMIN_PASSWORD_KEY, pwd);
+import { useAuthStore } from "../../../store/useAuthStore.js";
 
 const Settings = () => {
+  const {
+    authUser,
+    fetchCurrentAdmin,
+    updateAccount,
+    updating,
+    changePassword,
+    changingPassword,
+  } = useAuthStore();
+
   // Profile state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
+  const [profileErr, setProfileErr] = useState("");
 
   // Password state
   const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
-  const [savingPwd, setSavingPwd] = useState(false);
   const [pwdMsg, setPwdMsg] = useState("");
+  const [pwdErr, setPwdErr] = useState("");
   const [show, setShow] = useState({
     current: false,
     next: false,
     confirm: false,
   });
 
+  // Load current admin
   useEffect(() => {
-    const profile = loadProfile();
-    setName(profile.name || "");
-    setEmail(profile.email || "");
-    // Initialize a default password if none exists (optional)
-    if (!loadPassword()) savePassword("admin@123");
-  }, []);
+    const init = async () => {
+      if (!authUser) {
+        const res = await fetchCurrentAdmin();
+        if (res?.ok) {
+          setName(res.data?.name || "");
+          setEmail(res.data?.email || "");
+        }
+      } else {
+        setName(authUser.name || "");
+        setEmail(authUser.email || "");
+      }
+    };
+    init();
+  }, [authUser, fetchCurrentAdmin]);
 
   const validateEmail = (val) => /\S+@\S+\.\S+/.test(val);
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setProfileMsg("");
-    if (!name.trim()) return setProfileMsg("Name is required.");
-    if (!validateEmail(email))
-      return setProfileMsg("Enter a valid email address.");
+    setProfileErr("");
 
-    try {
-      setSavingProfile(true);
-      // Simulate latency
-      await new Promise((r) => setTimeout(r, 400));
-      saveProfile({ name: name.trim(), email: email.trim() });
+    if (!name.trim()) return setProfileErr("Name is required.");
+    if (!validateEmail(email))
+      return setProfileErr("Enter a valid email address.");
+
+    const res = await updateAccount({ name: name.trim(), email: email.trim() });
+    if (res?.ok) {
       setProfileMsg("Profile updated successfully.");
-    } finally {
-      setSavingProfile(false);
       setTimeout(() => setProfileMsg(""), 2500);
+    } else {
+      setProfileErr(res?.message || "Update failed.");
     }
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPwdMsg("");
-    const stored = loadPassword();
+    setPwdErr("");
 
-    if (stored && currentPwd !== stored) {
-      return setPwdMsg("Current password is incorrect.");
-    }
-    if (newPwd.length < 8) {
-      return setPwdMsg("New password must be at least 8 characters.");
-    }
-    if (newPwd === currentPwd) {
-      return setPwdMsg("New password must be different from current password.");
-    }
-    if (newPwd !== confirmPwd) {
-      return setPwdMsg("New passwords do not match.");
-    }
+    if (newPwd.length < 8)
+      return setPwdErr("New password must be at least 8 characters.");
+    if (newPwd === currentPwd)
+      return setPwdErr("New password must be different from current password.");
+    if (newPwd !== confirmPwd) return setPwdErr("New passwords do not match.");
 
-    try {
-      setSavingPwd(true);
-      await new Promise((r) => setTimeout(r, 400));
-      savePassword(newPwd);
+    const res = await changePassword({
+      oldPassword: currentPwd,
+      newPassword: newPwd,
+    });
+    if (res?.ok) {
       setPwdMsg("Password updated successfully.");
       setCurrentPwd("");
       setNewPwd("");
       setConfirmPwd("");
-    } finally {
-      setSavingPwd(false);
       setTimeout(() => setPwdMsg(""), 2500);
+    } else {
+      setPwdErr(res?.message || "Password change failed.");
     }
   };
 
@@ -158,16 +150,19 @@ const Settings = () => {
 
           <div className="sm:col-span-2 flex items-center justify-between gap-3">
             <div className="text-sm">
+              {profileErr && (
+                <span className="text-rose-700">{profileErr}</span>
+              )}
               {profileMsg && (
                 <span className="text-emerald-700">{profileMsg}</span>
               )}
             </div>
             <button
               type="submit"
-              disabled={savingProfile}
+              disabled={updating}
               className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
             >
-              {savingProfile ? "Saving..." : "Save Profile"}
+              {updating ? "Saving..." : "Save Profile"}
             </button>
           </div>
         </form>
@@ -202,6 +197,7 @@ const Settings = () => {
                 onChange={(e) => setCurrentPwd(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 placeholder="Current password"
+                required
               />
               <button
                 type="button"
@@ -274,14 +270,15 @@ const Settings = () => {
 
           <div className="sm:col-span-2 flex items-center justify-between gap-3">
             <div className="text-sm">
+              {pwdErr && <span className="text-rose-700">{pwdErr}</span>}
               {pwdMsg && <span className="text-emerald-700">{pwdMsg}</span>}
             </div>
             <button
               type="submit"
-              disabled={savingPwd}
+              disabled={changingPassword}
               className="inline-flex items-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:opacity-60"
             >
-              {savingPwd ? "Updating..." : "Update Password"}
+              {changingPassword ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>

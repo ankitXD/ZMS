@@ -1,18 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
-
-const ORDERS_KEY = "ticketOrders";
-const ANIMALS_KEY = "adminAnimals";
-const ADMINS_KEY = "adminUsers";
-
-const load = (key) => {
-  try {
-    const raw = localStorage.getItem(key);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
+import React, { useEffect, useMemo } from "react";
+import { useOrderStore } from "../../../store/useOrderStore.js";
+import { useAnimalStore } from "../../../store/useAnimalStore.js";
 
 const inr = (n) =>
   typeof n === "number"
@@ -39,61 +27,75 @@ const StatusBadge = ({ status }) => {
 
 const dayKey = (d) => {
   const x = new Date(d);
-  return new Date(x.getFullYear(), x.getMonth(), x.getDate()); // local midnight
+  return new Date(x.getFullYear(), x.getMonth(), x.getDate());
 };
 
 const ViewReports = () => {
-  const [orders, setOrders] = useState([]);
-  const [animals, setAnimals] = useState([]);
-  const [admins, setAdmins] = useState([]);
+  // Orders API
+  const { orders, ordersLoading, ordersError, fetchOrders } = useOrderStore();
+
+  // Animals API
+  const {
+    animals,
+    listLoading: animalsLoading,
+    listError: animalsError,
+    fetchAnimals,
+  } = useAnimalStore();
 
   const refresh = () => {
-    setOrders(load(ORDERS_KEY));
-    setAnimals(load(ANIMALS_KEY));
-    setAdmins(load(ADMINS_KEY));
+    fetchOrders({ sort: "-createdAt", limit: 500 });
+    fetchAnimals({ page: 1 }); // only need count; backend may still send pagination.total
   };
 
   useEffect(() => {
     refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const stats = useMemo(() => {
+  const { stats, recent, animalsCount } = useMemo(() => {
+    const list = Array.isArray(orders) ? orders : [];
+
     const byStatus = { paid: 0, pending: 0, refunded: 0, cancelled: 0 };
     let revenue = 0;
     const methods = {};
     const tickets = { adult: 0, child: 0, senior: 0 };
 
-    for (const o of orders) {
-      const status = (o.status || "pending").toLowerCase();
+    for (const o of list) {
+      const status = String(o.status || "pending").toLowerCase();
       if (byStatus[status] != null) byStatus[status] += 1;
-      const amt = Number(o.total) || 0;
+
+      const amt = Number(o.totalAmount) || 0;
       if (status === "paid") revenue += amt;
+
       const m = (o.paymentMethod || "-").toString();
       methods[m] = (methods[m] || 0) + 1;
 
-      const t = o.tickets || {};
-      tickets.adult += Number(t.adult) || 0;
-      tickets.child += Number(t.child) || 0;
-      tickets.senior += Number(t.senior) || 0;
+      const items = Array.isArray(o.items) ? o.items : [];
+      for (const it of items) {
+        const type = String(it.ticketType || "").toLowerCase();
+        const qty = Number(it.quantity) || 0;
+        if (tickets[type] != null) tickets[type] += qty;
+      }
     }
 
-    const totalOrders = orders.length;
+    const totalOrders = list.length;
     const avgOrder = byStatus.paid ? revenue / byStatus.paid : 0;
 
-    // Revenue last 7 days (paid only)
     const today = dayKey(new Date());
     const last7 = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() - (6 - i));
       return d;
     });
-    const paidOnly = orders.filter((o) => (o.status || "pending") === "paid");
+    const paidOnly = list.filter(
+      (o) => String(o.status).toLowerCase() === "paid"
+    );
     const byDay = new Map(last7.map((d) => [d.getTime(), 0]));
     for (const o of paidOnly) {
-      const when = new Date(o.createdAt || o.date || Date.now());
+      const when = new Date(o.createdAt || Date.now());
       const key = dayKey(when).getTime();
       if (byDay.has(key)) {
-        byDay.set(key, (byDay.get(key) || 0) + (Number(o.total) || 0));
+        byDay.set(key, (byDay.get(key) || 0) + (Number(o.totalAmount) || 0));
       }
     }
     const daySeries = last7.map((d) => ({
@@ -102,29 +104,29 @@ const ViewReports = () => {
     }));
     const maxDay = Math.max(1, ...daySeries.map((x) => x.amount));
 
-    return {
-      totalOrders,
-      revenue,
-      avgOrder,
-      ...byStatus,
-      methods,
-      tickets,
-      animalsCount: animals.length,
-      adminsCount: admins.length,
-      daySeries,
-      maxDay,
-    };
-  }, [orders, animals.length, admins.length]);
-
-  const recent = useMemo(() => {
-    return [...orders]
+    const recent = [...list]
       .sort(
         (a, b) =>
-          new Date(b.createdAt || b.date).getTime() -
-          new Date(a.createdAt || a.date).getTime()
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime()
       )
       .slice(0, 10);
-  }, [orders]);
+
+    return {
+      stats: {
+        totalOrders,
+        revenue,
+        avgOrder,
+        ...byStatus,
+        methods,
+        tickets,
+        daySeries,
+        maxDay,
+      },
+      recent,
+      animalsCount: Array.isArray(animals) ? animals.length : 0,
+    };
+  }, [orders, animals]);
 
   return (
     <section className="space-y-6" aria-label="Reports">
@@ -145,6 +147,18 @@ const ViewReports = () => {
           </button>
         </div>
       </div>
+
+      {/* Loading / Error */}
+      {(ordersLoading || animalsLoading) && (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          Loading reports…
+        </div>
+      )}
+      {(ordersError || animalsError) && (
+        <div className="rounded-lg border border-rose-200 bg-white p-4 text-sm text-rose-700">
+          {ordersError || animalsError}
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -178,22 +192,22 @@ const ViewReports = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm text-slate-600">Content</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">
-            {stats.animalsCount} Animals
+            {animalsCount} Animals
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {stats.adminsCount} Admins
+            {/* Hook up admin users count when admin users API is available */}
+            Admins —
           </p>
         </div>
       </div>
 
-      {/* Revenue chart + Methods + Tickets */}
+      {/* Revenue chart + Methods */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Revenue last 7 days */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 lg:col-span-2">
           <p className="text-sm font-semibold text-slate-900">
             Revenue (last 7 days)
           </p>
-          <div className="mt-4 flex items-end gap-3 h-40">
+          <div className="mt-4 flex h-40 items-end gap-3">
             {stats.daySeries.map((d) => {
               const h = Math.round((d.amount / stats.maxDay) * 100);
               const label = d.date.toLocaleDateString(undefined, {
@@ -217,7 +231,6 @@ const ViewReports = () => {
           </div>
         </div>
 
-        {/* Payment methods */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm font-semibold text-slate-900">
             Payment Methods
@@ -306,27 +319,27 @@ const ViewReports = () => {
                 </tr>
               )}
               {recent.map((o) => (
-                <tr key={o.id} className="hover:bg-slate-50/60">
+                <tr key={o._id} className="hover:bg-slate-50/60">
                   <td className="whitespace-nowrap px-4 py-3">
                     <StatusBadge status={o.status || "pending"} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-sm text-slate-900">
-                    {o.id}
+                    {o._id}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-900">
-                    {o.name || "-"}{" "}
-                    <span className="text-slate-500">({o.email || "-"})</span>
+                    {o.contact?.name || "-"}{" "}
+                    <span className="text-slate-500">
+                      ({o.contact?.email || "-"})
+                    </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">
-                    {inr(Number(o.total) || 0)}
+                    {inr(Number(o.totalAmount) || 0)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-700">
                     {o.paymentMethod || "-"}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                    {o.createdAt || o.date
-                      ? new Date(o.createdAt || o.date).toLocaleString()
-                      : "-"}
+                    {o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}
                   </td>
                 </tr>
               ))}

@@ -1,20 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-
-const ORDERS_KEY = "ticketOrders";
-
-const loadOrders = () => {
-  try {
-    const raw = localStorage.getItem(ORDERS_KEY);
-    const data = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveOrders = (list) => {
-  localStorage.setItem(ORDERS_KEY, JSON.stringify(list));
-};
+import { useOrderStore } from "../../../store/useOrderStore.js";
 
 const inr = (n) =>
   typeof n === "number"
@@ -39,136 +24,75 @@ const StatusBadge = ({ status }) => {
 };
 
 const Payments = () => {
-  const [orders, setOrders] = useState([]);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("all"); // all | paid | pending
+
+  const {
+    orders,
+    ordersLoading,
+    ordersError,
+    fetchOrders,
+    updateOrderStatus,
+    deleteOrder,
+    deletingId,
+    updatingStatus,
+    pagination,
+  } = useOrderStore();
+
+  // Fetch only pending or paid from API
+  const fetchParams = useMemo(
+    () => ({ status: "pending,paid", sort: "-createdAt", limit: 100 }),
+    []
+  );
 
   useEffect(() => {
-    const list = loadOrders().sort(
-      (a, b) =>
-        new Date(b.createdAt || b.date).getTime() -
-        new Date(a.createdAt || a.date).getTime()
-    );
-    setOrders(list);
-  }, []);
+    fetchOrders(fetchParams);
+  }, [fetchOrders, fetchParams]);
 
-  const payments = useMemo(() => {
-    // Treat each order as a payment attempt
-    return orders.map((o) => ({
-      id: o.id,
-      name: o.name,
-      email: o.email,
-      method: o.paymentMethod || "-",
-      amount: Number(o.total) || 0,
-      status: o.status || "pending",
-      createdAt: o.createdAt || o.date,
-    }));
-  }, [orders]);
+  // Ensure we only consider pending/paid even if API returns more
+  const payments = useMemo(
+    () =>
+      (orders || []).filter((o) =>
+        ["pending", "paid"].includes(String(o.status || "pending"))
+      ),
+    [orders]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return payments.filter((p) => {
+    return payments.filter((o) => {
+      const s = String(o.status || "pending");
       const statusOk =
-        status === "all" ? true : (p.status || "pending") === status;
+        status === "all" ? ["pending", "paid"].includes(s) : s === status;
+      const id = o._id || "";
+      const name = o.contact?.name || "";
+      const email = o.contact?.email || "";
+      const method = o.paymentMethod || "";
       const qOk = !q
         ? true
-        : [p.id, p.name, p.email, p.method]
+        : [id, name, email, method]
             .filter(Boolean)
             .some((v) => String(v).toLowerCase().includes(q));
       return statusOk && qOk;
     });
-  }, [payments, query, status]);
+  }, [payments, status, query]);
 
   const stats = useMemo(() => {
-    const paid = payments.filter((p) => p.status === "paid");
-    const refunded = payments.filter((p) => p.status === "refunded");
-    const pending = payments.filter((p) => p.status === "pending");
-    const revenue = paid.reduce((sum, p) => sum + p.amount, 0);
-    return {
-      paid: paid.length,
-      refunded: refunded.length,
-      pending: pending.length,
-      revenue,
-    };
+    const paid = payments.filter((o) => o.status === "paid");
+    const pending = payments.filter((o) => o.status === "pending");
+    const revenue = paid.reduce(
+      (sum, o) => sum + (Number(o.totalAmount) || 0),
+      0
+    );
+    return { paid: paid.length, pending: pending.length, revenue };
   }, [payments]);
 
-  const updateOrderStatus = (id, nextStatus) => {
-    setOrders((prev) => {
-      const next = prev.map((o) =>
-        o.id === id ? { ...o, status: nextStatus } : o
-      );
-      saveOrders(next);
-      return next;
-    });
-  };
-
-  const handleDelete = (id) => {
-    if (!window.confirm("Delete this order/payment?")) return;
-    setOrders((prev) => {
-      const next = prev.filter((o) => o.id !== id);
-      saveOrders(next);
-      return next;
-    });
-  };
-
-  const handleClearAll = () => {
-    if (!window.confirm("Clear all payments (orders)? This cannot be undone."))
-      return;
-    localStorage.removeItem(ORDERS_KEY);
-    setOrders([]);
-  };
-
-  const handleRefresh = () => setOrders(loadOrders());
-
-  const seedDemo = () => {
-    const now = Date.now();
-    const demo = [
-      {
-        id:
-          "ORD-" +
-          Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, "0"),
-        name: "Aarav Mehta",
-        email: "aarav@example.com",
-        createdAt: new Date(now - 1000 * 60 * 30).toISOString(),
-        tickets: { adult: 2, child: 1, senior: 0 },
-        total: 1450, // INR
-        paymentMethod: "UPI",
-        status: "paid",
-      },
-      {
-        id:
-          "ORD-" +
-          Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, "0"),
-        name: "Diya Kapoor",
-        email: "diya@example.com",
-        createdAt: new Date(now - 1000 * 60 * 120).toISOString(),
-        tickets: { adult: 1, child: 2, senior: 1 },
-        total: 1800,
-        paymentMethod: "Card",
-        status: "pending",
-      },
-      {
-        id:
-          "ORD-" +
-          Math.floor(Math.random() * 1e6)
-            .toString()
-            .padStart(6, "0"),
-        name: "Kabir Singh",
-        email: "kabir@example.com",
-        createdAt: new Date(now - 1000 * 60 * 300).toISOString(),
-        tickets: { adult: 2, child: 0, senior: 0 },
-        total: 1200,
-        paymentMethod: "Card",
-        status: "refunded",
-      },
-    ];
-    const merged = [...demo, ...orders];
-    setOrders(merged);
-    saveOrders(merged);
+  const handleRefresh = () => fetchOrders(fetchParams);
+  const handleMarkPaid = async (id) => updateOrderStatus(id, "paid");
+  const handleRefund = async (id) => updateOrderStatus(id, "refunded"); // will drop from this view on next fetch
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this payment (order)?")) return;
+    await deleteOrder(id);
   };
 
   return (
@@ -178,7 +102,7 @@ const Payments = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Payments</h1>
           <p className="text-sm text-slate-600">
-            Track ticket payments and manage refunds.
+            Showing orders with status Pending or Paid.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -188,24 +112,11 @@ const Payments = () => {
           >
             Refresh
           </button>
-          <button
-            onClick={seedDemo}
-            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            title="Add a few demo payments for testing"
-          >
-            Seed Demo
-          </button>
-          <button
-            onClick={handleClearAll}
-            className="inline-flex items-center rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700"
-          >
-            Clear All
-          </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm text-slate-600">Revenue (Paid)</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -222,12 +133,6 @@ const Payments = () => {
             {stats.pending}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-600">Refunded</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">
-            {stats.refunded}
-          </p>
-        </div>
       </div>
 
       {/* Filters */}
@@ -235,7 +140,7 @@ const Payments = () => {
         <p className="text-sm text-slate-600">
           Total:{" "}
           <span className="font-semibold text-slate-900">
-            {payments.length}
+            {pagination?.total ?? payments.length}
           </span>{" "}
           • Showing:{" "}
           <span className="font-semibold text-slate-900">
@@ -266,21 +171,25 @@ const Payments = () => {
             onChange={(e) => setStatus(e.target.value)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
           >
-            <option value="all">All statuses</option>
+            <option value="all">All (Pending + Paid)</option>
             <option value="paid">Paid</option>
             <option value="pending">Pending</option>
-            <option value="refunded">Refunded</option>
           </select>
         </div>
       </div>
 
       {/* Table */}
-      {filtered.length === 0 ? (
+      {ordersLoading ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
+          <p className="text-slate-600">Loading payments…</p>
+        </div>
+      ) : ordersError ? (
+        <div className="rounded-lg border border-rose-200 bg-white p-8 text-center">
+          <p className="text-rose-700">Failed to load: {ordersError}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
           <p className="text-slate-600">No payments found.</p>
-          <p className="mt-2 text-sm text-slate-500">
-            Payments will appear after orders are placed.
-          </p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
@@ -291,7 +200,7 @@ const Payments = () => {
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Payment ID
+                  Payment (Order) ID
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Customer
@@ -312,67 +221,76 @@ const Payments = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {filtered.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50/60">
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <StatusBadge status={p.status || "pending"} />
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-sm text-slate-900">
-                    {p.id || "-"}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-900">
-                    {p.name || "-"}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    {p.email ? (
-                      <a
-                        href={`mailto:${p.email}`}
-                        className="text-sky-700 hover:underline"
-                      >
-                        {p.email}
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-700">
-                    {p.method || "-"}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">
-                    {inr(p.amount)}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                    {p.createdAt ? new Date(p.createdAt).toLocaleString() : "-"}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {(p.status || "pending") !== "paid" && (
-                        <button
-                          onClick={() => updateOrderStatus(p.id, "paid")}
-                          className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              {filtered.map((o) => {
+                const id = o._id;
+                const contact = o.contact || {};
+                return (
+                  <tr key={id} className="hover:bg-slate-50/60">
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <StatusBadge status={o.status || "pending"} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-sm text-slate-900">
+                      {id || "-"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-900">
+                      {contact.name || "-"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      {contact.email ? (
+                        <a
+                          href={`mailto:${contact.email}`}
+                          className="text-sky-700 hover:underline"
                         >
-                          Mark Paid
-                        </button>
+                          {contact.email}
+                        </a>
+                      ) : (
+                        "-"
                       )}
-                      {(p.status || "pending") === "paid" && (
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                      {o.paymentMethod || "-"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">
+                      {inr(Number(o.totalAmount) || 0)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      {o.createdAt
+                        ? new Date(o.createdAt).toLocaleString()
+                        : "-"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {(o.status || "pending") !== "paid" && (
+                          <button
+                            onClick={() => handleMarkPaid(id)}
+                            disabled={updatingStatus}
+                            className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                          >
+                            {updatingStatus ? "Updating…" : "Mark Paid"}
+                          </button>
+                        )}
+                        {(o.status || "pending") === "paid" && (
+                          <button
+                            onClick={() => handleRefund(id)}
+                            disabled={updatingStatus}
+                            className="rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+                          >
+                            Refund
+                          </button>
+                        )}
                         <button
-                          onClick={() => updateOrderStatus(p.id, "refunded")}
-                          className="rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+                          onClick={() => handleDelete(id)}
+                          disabled={deletingId === id}
+                          className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                          title="Delete"
                         >
-                          Refund
+                          {deletingId === id ? "Deleting…" : "Delete"}
                         </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
-                        title="Delete"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
