@@ -21,10 +21,10 @@ router.post("/register", verifyJWT, requireAdminRole("owner"), registerAdmin);
 
 // Authenticated
 router.post("/logout", verifyJWT, logoutAdmin);
-router.post("/refresh", refreshAccessToken);
-router.get("/me", verifyJWT, getCurrentAdmin);
-router.patch("/me", verifyJWT, updateAccountDetails);
-router.patch("/me/password", verifyJWT, changeCurrentPassword);
+router.post("/refresh-token", refreshAccessToken);
+router.get("/current-user", verifyJWT, getCurrentAdmin);
+router.patch("/update-account", verifyJWT, updateAccountDetails);
+router.patch("/change-password", verifyJWT, changeCurrentPassword);
 
 // Admin/Owner: list all admins (owner, admin, editor)
 router.get(
