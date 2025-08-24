@@ -271,13 +271,14 @@ const BookTickets = () => {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="9999999999"
+                      maxLength={10} // limit to max 10 characters
                       className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </label>
                 </div>
 
                 {/* Promo */}
-                <label className="block">
+                {/* <label className="block">
                   <span className="text-sm font-medium text-slate-700">
                     Promo code
                   </span>
@@ -288,7 +289,7 @@ const BookTickets = () => {
                     placeholder="Try ZOO10"
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </label>
+                </label> */}
 
                 {/* Payment method */}
                 <label className="block">
