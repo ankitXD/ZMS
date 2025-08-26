@@ -26,11 +26,7 @@ import ViewReports from "../src/pages/admin/reports/ViewReports";
 import Settings from "../src/pages/admin/settings/Settings";
 
 // Auth loader (template)
-const AuthLoader = () => (
-  <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
-    <p className="text-white text-lg">Checking authentication...</p>
-  </div>
-);
+const AuthLoader = () => <div></div>;
 
 // Protected route (template) – uses backend roles owner|admin|editor
 const ProtectedRoute = ({ children }) => {
