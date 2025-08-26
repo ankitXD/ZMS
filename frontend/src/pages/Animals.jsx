@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAnimalStore } from "../store/useAnimalStore.js";
 import AnimalCard from "../components/AnimalCard.jsx";
 
@@ -9,8 +9,16 @@ const Animals = () => {
   const category = params.get("category") || "";
   const page = Number(params.get("page") || 1);
 
-  const { animals, pagination, listLoading, listError, fetchAnimals } =
-    useAnimalStore();
+  const navigate = useNavigate();
+
+  const {
+    animals,
+    pagination,
+    listLoading,
+    listError,
+    fetchAnimals,
+    fetchAnimalById, // <- use for prefetch on click
+  } = useAnimalStore();
 
   useEffect(() => {
     fetchAnimals({
@@ -26,6 +34,15 @@ const Animals = () => {
     const next = new URLSearchParams(params);
     next.set("page", String(p));
     setParams(next, { replace: false });
+  };
+
+  const handleOpenAnimal = async (id) => {
+    // Prefetch details, then navigate
+    try {
+      await fetchAnimalById(id);
+    } finally {
+      navigate(`/animals/${id}`);
+    }
   };
 
   return (
@@ -69,13 +86,27 @@ const Animals = () => {
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {animals.map((a) => (
-              <AnimalCard
+              <Link
                 key={a._id}
-                image={a.imageUrl || "/placeholder.png"}
-                name={a.name}
-                description={a.title || a.category}
-                href={`/animals/${a._id}`}
-              />
+                to={`/animals/${a._id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleOpenAnimal(a._id);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleOpenAnimal(a._id);
+                  }
+                }}
+                className="block focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-lg"
+              >
+                <AnimalCard
+                  image={a.imageUrl || "/placeholder.png"}
+                  name={a.name}
+                  description={a.title || a.category}
+                />
+              </Link>
             ))}
           </div>
 

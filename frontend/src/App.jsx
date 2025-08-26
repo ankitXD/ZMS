@@ -56,7 +56,7 @@ function App() {
     if (location.pathname.startsWith("/admin/dashboard")) {
       document.title = "Admin Dashboard";
     } else {
-      document.title = "ZMS";
+      document.title = "Zoo Verse";
     }
   }, [location.pathname]);
 
