@@ -65,7 +65,7 @@ const AnimalsCatalogue = () => {
                 >
                   <AnimalCard
                     image={a.imageUrl || "/placeholder.png"}
-                    name={a.name}
+                    name={a.name.toUpperCase()}
                     description={a.title || a.category || a.description}
                     aspect="square"
                   />

@@ -174,7 +174,7 @@ const Footer = () => {
           </div>
 
           {/* Newsletter */}
-          <div>
+          {/* <div>
             <h3 className="text-sm font-semibold text-slate-900">Newsletter</h3>
             <p className="mt-3 text-sm text-slate-600">
               Get updates on new animals and special events.
@@ -199,7 +199,7 @@ const Footer = () => {
                 Subscribe
               </button>
             </form>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom bar */}

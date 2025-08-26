@@ -97,7 +97,7 @@ const AnimalDetail = () => {
             </div>
             <div className="p-6 sm:p-8">
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-                {name}
+                {name.toUpperCase()}
               </h1>
               {(title || category) && (
                 <p className="mt-1 text-sm text-slate-600">
