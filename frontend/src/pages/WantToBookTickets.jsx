@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const WantToBookTickets = () => {
   return (
@@ -48,12 +49,12 @@ const WantToBookTickets = () => {
             </ul>
 
             <div className="mt-6">
-              <a
-                href="/tickets"
+              <Link
+                to="/tickets"
                 className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
               >
                 Go to Tickets
-              </a>
+              </Link>
               <p className="mt-2 text-sm text-slate-500">
                 You’ll select date, time slot, and tickets on the tickets page.
               </p>

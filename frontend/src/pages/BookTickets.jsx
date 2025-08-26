@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useOrderStore } from "../store/useOrderStore.js";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const PRICES = { adult: 20, child: 10, senior: 15 };
 
@@ -399,12 +400,12 @@ const BookTickets = () => {
                 <p className="mt-2 text-sm text-slate-600">
                   Questions about accessibility, group bookings, or events?
                 </p>
-                <a
-                  href="/contact"
+                <Link
+                  to="/contact"
                   className="mt-3 inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                 >
                   Contact Us
-                </a>
+                </Link>
               </div>
             </aside>
           </div>

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const AboutUs = () => {
   return (
@@ -43,12 +44,12 @@ const AboutUs = () => {
                 wildlife champions.
               </p>
               <div className="mt-6">
-                <a
-                  href="/animals"
+                <Link
+                  to="/animals"
                   className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
                 >
                   Meet Our Animals
-                </a>
+                </Link>
               </div>
             </div>
 

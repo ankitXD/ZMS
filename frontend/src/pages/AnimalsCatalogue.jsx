@@ -1,14 +1,25 @@
 import React, { useEffect } from "react";
 import AnimalCard from "../components/AnimalCard";
 import { useAnimalStore } from "../store/useAnimalStore.js";
+import { Link, useNavigate } from "react-router-dom";
 
 const AnimalsCatalogue = () => {
-  const { animals, listLoading, listError, fetchAnimals } = useAnimalStore();
+  const { animals, listLoading, listError, fetchAnimals, fetchAnimalById } =
+    useAnimalStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Load the latest 4 animals
     fetchAnimals({ limit: 4, sort: "-createdAt" });
   }, [fetchAnimals]);
+
+  const handleOpenAnimal = async (id) => {
+    try {
+      await fetchAnimalById(id); // prefetch detail
+    } finally {
+      navigate(`/animals/${id}`);
+    }
+  };
 
   return (
     <section className="relative" aria-label="Animals Catalogue">
@@ -38,8 +49,18 @@ const AnimalsCatalogue = () => {
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {animals.slice(0, 4).map((a) => (
               <li key={a._id}>
-                <a
-                  href={`/animals/${a._id}`}
+                <Link
+                  to={`/animals/${a._id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleOpenAnimal(a._id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleOpenAnimal(a._id);
+                    }
+                  }}
                   className="block focus:outline-none"
                 >
                   <AnimalCard
@@ -48,7 +69,7 @@ const AnimalsCatalogue = () => {
                     description={a.title || a.category || a.description}
                     aspect="square"
                   />
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -56,12 +77,12 @@ const AnimalsCatalogue = () => {
 
         {/* CTA */}
         <div className="mt-8 flex justify-center">
-          <a
-            href="/animals"
+          <Link
+            to="/animals"
             className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
           >
             Explore More
-          </a>
+          </Link>
         </div>
       </div>
     </section>
