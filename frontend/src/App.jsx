@@ -56,11 +56,21 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    checkAuth();
+    // Only run full auth session check when user is on admin pages (or the login page).
+    // This avoids calling /admin/current-user and /admin/refresh on the public site.
+    if (
+      location.pathname.startsWith("/admin") ||
+      location.pathname === "/login"
+    ) {
+      checkAuth();
+    } else {
+      // mark auth check complete for public pages to avoid AuthLoader blocking render
+      useAuthStore.setState({ isAuthCheck: false });
+    }
     return () => {
       console.log("UnMounting");
     };
-  }, []);
+  }, [location.pathname, checkAuth]);
 
   // Set browser tab title
   useEffect(() => {
