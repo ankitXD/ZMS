@@ -24,6 +24,7 @@ import Orders from "../src/pages/admin/orders/Orders";
 import Payments from "../src/pages/admin/payments/Payments";
 import ViewReports from "../src/pages/admin/reports/ViewReports";
 import Settings from "../src/pages/admin/settings/Settings";
+import Custom404 from "./components/Custom404.jsx";
 
 // Auth loader (circle animation)
 const AuthLoader = () => (
@@ -105,6 +106,7 @@ function App() {
           <Route path="reports" element={<ViewReports />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+        <Route path="*" element={<Custom404 />} />
       </Routes>
       <BackToTopButton />
     </>
