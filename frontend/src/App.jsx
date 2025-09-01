@@ -57,6 +57,9 @@ function App() {
 
   useEffect(() => {
     checkAuth();
+    return () => {
+      console.log("UnMounting");
+    };
   }, []);
 
   // Set browser tab title
