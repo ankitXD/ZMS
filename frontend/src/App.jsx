@@ -67,9 +67,9 @@ function App() {
       // mark auth check complete for public pages to avoid AuthLoader blocking render
       useAuthStore.setState({ isAuthCheck: false });
     }
-    return () => {
-      console.log("UnMounting");
-    };
+    // return () => {
+    //   console.log("UnMounting");
+    // };
   }, [location.pathname, checkAuth]);
 
   // Set browser tab title
