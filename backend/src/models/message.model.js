@@ -12,7 +12,7 @@ const messageSchema = new Schema(
     status: { type: String, enum: MESSAGE_STATUS, default: "new" },
     handledBy: { type: Types.ObjectId, ref: "AdminUser" },
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: false } }
+  { timestamps: { createdAt: "createdAt", updatedAt: false } },
 );
 
 messageSchema.index({ status: 1, createdAt: -1 });
