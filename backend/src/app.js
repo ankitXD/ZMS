@@ -16,6 +16,8 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+app.get("/", (req, res) => res.send("API Running"));
+
 //routes import
 import healthcheckRouter from "../src/routes/health.routes.js";
 import adminUserRouter from "../src/routes/adminUser.routes.js";
