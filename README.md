@@ -1,6 +1,15 @@
 # ZMS — Zoo Management System (Zoo Verse)
 
-ZMS is a full‑stack web app for a zoo website. It includes a public frontend (animals, tickets, contact) and an admin backend (animals CRUD, orders with QR tickets, messages inbox, admin auth with RBAC).
+<h1 align="center">
+  <a href="https://zms.chaipecharcha.tech/">
+    <img src="./frontend/public/frontend.jpg" alt="Zoo Verse" />
+  </a>
+</h1>
+<h1 align="center">
+  <a href="https://zms.chaipecharcha.tech/">
+    <img src="./frontend/public/dashboard.jpg" alt="Zoo Verse" />
+  </a>
+</h1>
 
 ## Demo Video
 
@@ -8,7 +17,7 @@ Watch a short walkthrough of the app:
 
 - https://youtu.be/N60zMG09a_s
 
-## Current Status (24 Aug 2025)
+## Current Status
 
 - Auth & RBAC (backend)
 
