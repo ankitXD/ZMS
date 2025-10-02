@@ -60,6 +60,7 @@
 ## 🌐 Live & Demo
 
 - **Live App:** https://zms.chaipecharcha.tech/
+- **Backend:** https://zms-backend-cc1f6d375234.herokuapp.com/
 - **Demo Video:** https://youtu.be/N60zMG09a_s
 
 ---
