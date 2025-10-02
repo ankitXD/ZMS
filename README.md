@@ -247,7 +247,7 @@ Quick start:
 
 ## 📄 License
 
-Add a LICENSE file (MIT / Apache-2.0 recommended). _(Currently not specified.)_
+Distributed under the **MIT License**. See the [`LICENSE`](./LICENSE) file for full text.
 
 ---
 
