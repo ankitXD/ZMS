@@ -107,6 +107,16 @@ const Login = () => {
           </p> */}
         </form>
       </div>
+
+      {/* Added button */}
+      <div className="mt-6 w-full max-w-md text-center">
+        <Link
+          to="/"
+          className="text-sm font-medium text-slate-600 hover:text-slate-800 underline"
+        >
+          ← Back to Home Page
+        </Link>
+      </div>
     </main>
   );
 };
