@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useOrderStore } from "../store/useOrderStore.js";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { z } from "zod";
 
 const PRICES = { adult: 20, child: 10, senior: 15 };
 
@@ -12,13 +13,15 @@ const BookTickets = () => {
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState("morning");
   const [qty, setQty] = useState({ adult: 1, child: 0, senior: 0 });
-  const [promo, setPromo] = useState("");
 
   // Contact + payment
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("upi"); // upi|card|cash
+
+  // Validation errors
+  const [errors, setErrors] = useState({});
 
   // Store (createOrder calls POST /orders)
   const { creating, createdOrder, createOrder } = useOrderStore();
@@ -46,31 +49,144 @@ const BookTickets = () => {
       qty.senior * PRICES.senior,
     [qty]
   );
-  const discount = useMemo(
-    () =>
-      promo.trim().toUpperCase() === "ZOO10" ? Math.round(subtotal * 0.1) : 0,
-    [promo, subtotal]
-  );
+  const discount = useMemo(() => 0, []);  // Promo code functionality removed
   const total = Math.max(0, subtotal - discount);
 
-  const updateQty = (key, delta) =>
-    setQty((q) => ({
-      ...q,
-      [key]: Math.max(0, Math.min(10, (q[key] ?? 0) + delta)),
-    }));
+  // Zod validation schemas
+  const dateSchema = z.string().min(1, "Please select a visit date").refine(
+    (date) => new Date(date) >= new Date(todayISO()),
+    "Date cannot be in the past"
+  );
+
+  const nameSchema = z.string().min(1, "Name is required").min(2, "Name must be at least 2 characters");
+  
+  const emailSchema = z.string().min(1, "Email is required").email("Please enter a valid email address");
+  
+  const phoneSchema = z.string().optional().refine(
+    (phone) => !phone || /^\d{10}$/.test(phone),
+    "Phone number must be 10 digits"
+  );
+
+  // Validation functions
+  const validateField = (field, value) => {
+    let result;
+    switch (field) {
+      case 'date':
+        result = dateSchema.safeParse(value);
+        break;
+      case 'tickets':
+        if (qty.adult + qty.child + qty.senior === 0) {
+          return 'Please select at least one ticket';
+        }
+        return '';
+      case 'name':
+        result = nameSchema.safeParse(value);
+        break;
+      case 'email':
+        result = emailSchema.safeParse(value);
+        break;
+      case 'phone':
+        result = phoneSchema.safeParse(value);
+        break;
+      default:
+        return '';
+    }
+    
+    return result.success ? '' : result.error?.issues?.[0]?.message || 'Invalid input';
+  };
+
+  const clearError = (field) => {
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    const dateError = validateField('date', date);
+    if (dateError) newErrors.date = dateError;
+    
+    const ticketsError = validateField('tickets');
+    if (ticketsError) newErrors.tickets = ticketsError;
+    
+    const nameError = validateField('name', name);
+    if (nameError) newErrors.name = nameError;
+    
+    const emailError = validateField('email', email);
+    if (emailError) newErrors.email = emailError;
+    
+    const phoneError = validateField('phone', phone);
+    if (phoneError) newErrors.phone = phoneError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const updateQty = (key, delta) => {
+    setQty((q) => {
+      const newQty = {
+        ...q,
+        [key]: Math.max(0, Math.min(10, (q[key] ?? 0) + delta)),
+      };
+      
+      // Clear tickets error when quantity changes
+      if (newQty.adult + newQty.child + newQty.senior > 0) {
+        clearError('tickets');
+      }
+      
+      return newQty;
+    });
+  };
+
+  // Blur validation handlers
+  const handleDateBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('date', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, date: error }));
+    } else {
+      clearError('date');
+    }
+  };
+
+  const handleNameBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('name', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, name: error }));
+    } else {
+      clearError('name');
+    }
+  };
+
+  const handleEmailBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('email', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, email: error }));
+    } else {
+      clearError('email');
+    }
+  };
+
+  const handlePhoneBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('phone', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, phone: error }));
+    } else {
+      clearError('phone');
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!date) {
-      toast.error("Please select a date");
-      return;
-    }
-    if (qty.adult + qty.child + qty.senior === 0) {
-      toast.error("Please add at least one ticket");
-      return;
-    }
-    if (!name || !email) {
-      toast.error("Name and email are required");
+    
+    if (!validateForm()) {
+      toast.error("Please fix the errors below");
       return;
     }
 
@@ -167,9 +283,17 @@ const BookTickets = () => {
                     value={date}
                     min={todayISO()}
                     onChange={(e) => setDate(e.target.value)}
+                    onBlur={handleDateBlur}
                     required
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 ${
+                      errors.date
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-slate-300 focus:ring-emerald-500'
+                    }`}
                   />
+                  {errors.date && (
+                    <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+                  )}
                 </label>
 
                 <label className="block">
@@ -230,6 +354,9 @@ const BookTickets = () => {
                       </div>
                     </div>
                   ))}
+                  {errors.tickets && (
+                    <p className="text-sm text-red-600">{errors.tickets}</p>
+                  )}
                 </div>
 
                 {/* Contact */}
@@ -245,10 +372,18 @@ const BookTickets = () => {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      onBlur={handleNameBlur}
                       placeholder="Your name"
-                      required
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      // required
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${
+                        errors.name
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-slate-300 focus:ring-emerald-500'
+                      }`}
                     />
+                    {errors.name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    )}
                   </label>
                   <label className="block">
                     <span className="text-sm font-medium text-slate-700">
@@ -258,10 +393,18 @@ const BookTickets = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onBlur={handleEmailBlur}
                       placeholder="you@example.com"
                       required
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${
+                        errors.email
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-slate-300 focus:ring-emerald-500'
+                      }`}
                     />
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                    )}
                   </label>
                   <label className="block">
                     <span className="text-sm font-medium text-slate-700">
@@ -271,10 +414,18 @@ const BookTickets = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      onBlur={handlePhoneBlur}
                       placeholder="9999999999"
                       maxLength={10} // limit to max 10 characters
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${
+                        errors.phone
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-slate-300 focus:ring-emerald-500'
+                      }`}
                     />
+                    {errors.phone && (
+                      <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+                    )}
                   </label>
                 </div>
 
