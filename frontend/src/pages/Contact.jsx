@@ -1,21 +1,130 @@
-import React from "react";
+import React, { useState } from "react";
 import { useMessageStore } from "../store/useMessageStore";
+import toast from "react-hot-toast";
+import { z } from "zod";
 
 const Contact = () => {
   const { submitMessage, submitting, submitSuccess } = useMessageStore();
 
+  // Form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  // Validation errors
+  const [errors, setErrors] = useState({});
+
+  // Zod validation schemas
+  const nameSchema = z.string().min(1, "Name is required").min(2, "Name must be at least 2 characters");
+  
+  const emailSchema = z.string().min(1, "Email is required").email("Please enter a valid email address");
+  
+  const subjectSchema = z.string(); // Subject is optional
+  
+  const messageSchema = z.string().min(1, "Message is required").min(10, "Message must be at least 10 characters");
+
+  // Validation functions
+  const validateField = (field, value) => {
+    let result;
+    switch (field) {
+      case 'name':
+        result = nameSchema.safeParse(value);
+        break;
+      case 'email':
+        result = emailSchema.safeParse(value);
+        break;
+      case 'subject':
+        result = subjectSchema.safeParse(value);
+        break;
+      case 'message':
+        result = messageSchema.safeParse(value);
+        break;
+      default:
+        return '';
+    }
+    
+    return result.success ? '' : result.error?.issues?.[0]?.message || 'Invalid input';
+  };
+
+  const clearError = (field) => {
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    const nameError = validateField('name', name);
+    if (nameError) newErrors.name = nameError;
+    
+    const emailError = validateField('email', email);
+    if (emailError) newErrors.email = emailError;
+    
+    const messageError = validateField('message', message);
+    if (messageError) newErrors.message = messageError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Blur validation handlers
+  const handleNameBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('name', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, name: error }));
+    } else {
+      clearError('name');
+    }
+  };
+
+  const handleEmailBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('email', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, email: error }));
+    } else {
+      clearError('email');
+    }
+  };
+
+  const handleMessageBlur = (e) => {
+    const value = e.target.value;
+    const error = validateField('message', value);
+    if (error) {
+      setErrors(prev => ({ ...prev, message: error }));
+    } else {
+      clearError('message');
+    }
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
+    
+    if (!validateForm()) {
+      toast.error("Please fix the errors below");
+      return;
+    }
+
     const payload = {
-      name: fd.get("name"),
-      email: fd.get("email"),
-      subject: fd.get("subject"),
-      message: fd.get("message"),
+      name,
+      email,
+      subject,
+      message,
     };
     const res = await submitMessage(payload);
-    if (res?.ok) form.reset();
+    if (res?.ok) {
+      // Reset form
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+      setErrors({});
+    }
   };
 
   return (
@@ -108,11 +217,20 @@ const Contact = () => {
                   </span>
                   <input
                     type="text"
-                    name="name"
-                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={handleNameBlur}
+                    // required
                     placeholder="Your name"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${
+                      errors.name
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-slate-300 focus:ring-emerald-500'
+                    }`}
                   />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  )}
                 </label>
 
                 <label className="block">
@@ -121,11 +239,20 @@ const Contact = () => {
                   </span>
                   <input
                     type="email"
-                    name="email"
-                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onBlur={handleEmailBlur}
+                    // required
                     placeholder="you@example.com"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${
+                      errors.email
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-slate-300 focus:ring-emerald-500'
+                    }`}
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  )}
                 </label>
 
                 <label className="block">
@@ -134,7 +261,8 @@ const Contact = () => {
                   </span>
                   <input
                     type="text"
-                    name="subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
                     placeholder="Subject (optional)"
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
@@ -145,12 +273,21 @@ const Contact = () => {
                     Message
                   </span>
                   <textarea
-                    name="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onBlur={handleMessageBlur}
                     rows="5"
-                    required
+                    // required
                     placeholder="How can we help?"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 ${
+                      errors.message
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-slate-300 focus:ring-emerald-500'
+                    }`}
                   />
+                  {errors.message && (
+                    <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+                  )}
                 </label>
 
                 <button
