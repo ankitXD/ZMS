@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./frontend/public/frontend.jpg" alt="Zoo Verse Public Frontend" width="1000" />
+  <img src="./frontend/public/frontendv2.jpg" alt="Zoo Verse Public Frontend" width="1000" />
 </p>
 
 <h1 align="center">
