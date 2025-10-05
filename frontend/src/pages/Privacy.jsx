@@ -12,17 +12,17 @@ const Privacy = () => {
       />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
         <header className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
             Privacy Policy
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
             Last updated: {updatedOn}
           </p>
         </header>
 
         {/* TOC */}
         <nav aria-label="Table of contents" className="mb-8">
-          <ul className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 sm:grid-cols-2">
+          <ul className="grid gap-2 rounded-xl border p-4 text-sm sm:grid-cols-2 surface">
             <li>
               <a href="#intro" className="hover:text-slate-900">
                 1. Introduction
@@ -82,14 +82,9 @@ const Privacy = () => {
         </nav>
 
         <div className="space-y-8">
-          <section
-            id="intro"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              1. Introduction
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="intro" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">1. Introduction</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               This Privacy Policy explains how Zoo Verse (“we”, “us”, or “our”)
               collects, uses, and safeguards your information when you use our
               website and services, including browsing animals and purchasing
@@ -97,14 +92,9 @@ const Privacy = () => {
             </p>
           </section>
 
-          <section
-            id="data-we-collect"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              2. Information We Collect
-            </h2>
-            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-700">
+          <section id="data-we-collect" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">2. Information We Collect</h2>
+            <ul className="mt-3 list-inside list-disc space-y-1" style={{ color: 'var(--text)' }}>
               <li>
                 Contact details (name, email, phone) when you purchase tickets
                 or contact us.
@@ -124,14 +114,9 @@ const Privacy = () => {
             </ul>
           </section>
 
-          <section
-            id="how-we-use"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              3. How We Use Information
-            </h2>
-            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-700">
+          <section id="how-we-use" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">3. How We Use Information</h2>
+            <ul className="mt-3 list-inside list-disc space-y-1" style={{ color: 'var(--text)' }}>
               <li>Process ticket orders and send confirmations/updates.</li>
               <li>Provide customer support and respond to inquiries.</li>
               <li>Improve site performance, content, and user experience.</li>
@@ -142,28 +127,18 @@ const Privacy = () => {
             </ul>
           </section>
 
-          <section
-            id="cookies"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              4. Cookies & Tracking
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="cookies" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">4. Cookies & Tracking</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               We use cookies for essential site functions, analytics, and
               remembering preferences. You can control cookies through your
               browser settings; disabling them may limit certain features.
             </p>
           </section>
 
-          <section
-            id="sharing"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              5. Sharing & Disclosure
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="sharing" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">5. Sharing & Disclosure</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               We do not sell your personal information. We may share data with
               trusted service providers to process payments, deliver services,
               or comply with law. These providers are obligated to protect your
@@ -171,96 +146,63 @@ const Privacy = () => {
             </p>
           </section>
 
-          <section
-            id="security"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              6. Data Security
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="security" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">6. Data Security</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               We implement administrative, technical, and physical safeguards
               designed to protect your information. No method of transmission or
               storage is 100% secure.
             </p>
           </section>
 
-          <section
-            id="retention"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              7. Data Retention
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="retention" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">7. Data Retention</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               We retain information for as long as needed to provide services,
               comply with legal obligations, resolve disputes, and enforce
               agreements.
             </p>
           </section>
 
-          <section
-            id="rights"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              8. Your Rights
-            </h2>
-            <ul className="mt-3 list-inside list-disc space-y-1 text-slate-700">
+          <section id="rights" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">8. Your Rights</h2>
+            <ul className="mt-3 list-inside list-disc space-y-1" style={{ color: 'var(--text)' }}>
               <li>Access, update, or delete your personal information.</li>
               <li>Object to or restrict certain processing.</li>
               <li>Withdraw consent where processing is based on consent.</li>
             </ul>
-            <p className="mt-2 text-slate-700">
+            <p className="mt-2" style={{ color: 'var(--text)' }}>
               To make a request, contact us using the details below.
             </p>
           </section>
 
-          <section
-            id="children"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              9. Children’s Privacy
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="children" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">9. Children’s Privacy</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               Our services are intended for general audiences. We do not
               knowingly collect personal information from children without
               appropriate consent.
             </p>
           </section>
 
-          <section
-            id="changes"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              10. Changes to This Policy
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="changes" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">10. Changes to This Policy</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               We may update this Policy periodically. The “Last updated” date
               reflects the most recent changes. Continued use of our services
               after changes means you accept the updated Policy.
             </p>
           </section>
 
-          <section
-            id="contact"
-            className="rounded-xl border border-slate-200 bg-white p-6"
-          >
-            <h2 className="text-xl font-semibold text-slate-900">
-              11. Contact Us
-            </h2>
-            <p className="mt-3 text-slate-700">
+          <section id="contact" className="rounded-xl border p-6 surface">
+            <h2 className="text-xl font-semibold">11. Contact Us</h2>
+            <p className="mt-3" style={{ color: 'var(--text)' }}>
               Questions about this Policy? Visit our{" "}
-              <Link to="/contact" className="text-sky-700 hover:underline">
+              <Link to="/contact" className="hover:underline" style={{ color: 'var(--primary)' }}>
                 Contact
               </Link>{" "}
               page or email us at{" "}
-              <a
-                href="mailto:hello@zooverse.example"
-                className="text-sky-700 hover:underline"
-              >
+              <a href="mailto:hello@zooverse.example" className="hover:underline" style={{ color: 'var(--primary)' }}>
                 hello@zooverse.example
               </a>
               .
@@ -268,10 +210,7 @@ const Privacy = () => {
           </section>
 
           <div className="flex items-center justify-between">
-            <Link
-              to="/"
-              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
+            <Link to="/" className="inline-flex items-center rounded-lg border px-4 py-2" style={{ borderColor: 'var(--border)', color: 'var(--text)' }}>
               ← Back to Home
             </Link>
             <Link

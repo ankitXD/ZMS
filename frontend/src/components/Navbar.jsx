@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore.js"; // NEW
 
@@ -6,6 +6,36 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const { authUser } = useAuthStore(); // NEW
   const isAuthed = !!authUser; // NEW
+
+  // Theme (light | dark) persisted in localStorage
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem("zms_theme");
+      if (saved) return saved;
+      // fallback to OS preference
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    } catch (e) {
+      return "light";
+    }
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    try {
+      localStorage.setItem("zms_theme", theme);
+    } catch (e) {
+      // ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   const linkBase =
     "inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500";
@@ -71,16 +101,35 @@ const Navbar = () => {
             >
               {isAuthed ? "My Account" : "Admin Login"}
             </Link>
+            {/* Theme toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              className={`${linkBase} ${linkVariant.default} inline-flex items-center justify-center`}
+            >
+              {theme === "dark" ? (
+                // Sun icon
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 3.5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V4.25A.75.75 0 0110 3.5zM10 13.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM4.22 5.47a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06L4.22 6.53a.75.75 0 010-1.06zM14.66 13.91a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM16.5 10a.75.75 0 01.75.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 0116.5 10zM3 10a.75.75 0 01.75.75H2.25a.75.75 0 010-1.5h1.5A.75.75 0 013 10zM14.78 6.53a.75.75 0 010 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zM6.53 14.78a.75.75 0 010 1.06l-1.06 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0z" />
+                </svg>
+              ) : (
+                // Moon icon
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M17.293 13.293A8 8 0 116.707 2.707a7 7 0 0010.586 10.586z" />
+                </svg>
+              )}
+            </button>
           </nav>
 
           {/* Mobile toggle */}
-          <button
-            type="button"
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-            aria-label="Toggle navigation"
-            aria-expanded={open}
-            onClick={() => setOpen(!open)}
-          >
+            <button
+              type="button"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+              aria-label="Toggle navigation"
+              aria-expanded={open}
+              onClick={() => setOpen(!open)}
+            >
             {open ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -119,6 +168,19 @@ const Navbar = () => {
         {open && (
           <nav className="md:hidden pb-4">
             <div className="mt-2 grid gap-2">
+              {/* mobile theme toggle */}
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleTheme();
+                    setOpen(false);
+                  }}
+                  className={`${linkBase} ${linkVariant.default} justify-center`}
+                >
+                  {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                </button>
+              </div>
               <Link
                 className={`${linkBase} ${linkVariant.default} justify-center`}
                 to="/"

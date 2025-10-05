@@ -45,7 +45,7 @@ const AnimalCard = ({
           <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
         )}
         {description && (
-          <p className="mt-1 text-sm text-slate-600">{description}</p>
+          <p className="mt-1 text-sm text-slate-600 !text-black">{description}</p>
         )}
       </div>
     </>

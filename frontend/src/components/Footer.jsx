@@ -6,7 +6,7 @@ const Footer = () => {
 
   return (
     <footer
-      className="bg-white border-t border-slate-200"
+      className="surface border-t"
       role="contentinfo"
       aria-label="Footer"
     >
@@ -19,16 +19,13 @@ const Footer = () => {
         <div className="py-10 grid gap-10 md:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link
-              to="/"
-              className="flex items-center gap-2 font-extrabold text-slate-900"
-            >
+            <Link to="/" className="flex items-center gap-2 font-extrabold">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-sky-500 text-white shadow-md">
                 <span className="text-lg">🐾</span>
               </span>
               <span className="text-lg tracking-tight">Zoo Verse</span>
             </Link>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm" style={{ color: 'var(--muted)' }}>
               Connecting you with wildlife, responsibly.
             </p>
 
@@ -37,7 +34,8 @@ const Footer = () => {
               <a
                 href="#"
                 aria-label="Visit Zoo Verse on X"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
               >
                 {/* X/Twitter */}
                 <svg
@@ -52,7 +50,8 @@ const Footer = () => {
               <a
                 href="#"
                 aria-label="Visit Zoo Verse on Instagram"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
               >
                 {/* Instagram */}
                 <svg
@@ -67,7 +66,8 @@ const Footer = () => {
               <a
                 href="#"
                 aria-label="Visit Zoo Verse on Facebook"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
               >
                 {/* Facebook */}
                 <svg
@@ -82,7 +82,8 @@ const Footer = () => {
               <a
                 href="#"
                 aria-label="Visit Zoo Verse on YouTube"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
               >
                 {/* YouTube */}
                 <svg
@@ -99,12 +100,12 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">
+            <h3 className="text-sm font-semibold">
               Quick Links
             </h3>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link className="text-slate-600 hover:text-slate-900" to="/">
+                <Link className="hover:underline" to="/">
                   Home
                 </Link>
               </li>
@@ -153,8 +154,8 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Contact</h3>
-            <ul className="mt-3 space-y-2 text-sm text-slate-600">
+            <h3 className="text-sm font-semibold">Contact</h3>
+            <ul className="mt-3 space-y-2 text-sm" style={{ color: 'var(--muted)' }}>
               <li>123 Safari Lane, Green Park</li>
               <li>
                 <a className="hover:text-slate-900" href="tel:+10000000000">
@@ -203,7 +204,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-slate-200 py-4 text-sm text-slate-600 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="border-t py-4 text-sm flex flex-col gap-2 md:flex-row md:items-center md:justify-between" style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}>
           <p>© {year} Zoo Verse. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link to="/privacy" className="hover:text-slate-900">

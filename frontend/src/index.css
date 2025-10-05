@@ -1,1 +1,113 @@
 @import "tailwindcss";
+
+/* Theme variables */
+:root {
+	--bg: #ffffff;
+	--surface: #ffffff;
+	--muted: #94a3b8; /* slate-400 */
+	--text: #0f172a; /* slate-900 */
+	--primary: #059669; /* emerald-600 */
+	--border: #e6eef5; /* light border */
+}
+
+.dark {
+	--bg: #0b1220; /* very dark */
+	--surface: #071026;
+	--muted: #94a3b8;
+	--text: #e6eef5;
+	--primary: #34d399; /* emerald-400 */
+	--border: #12243a;
+}
+
+/* Apply variables to common elements */
+html, body, #root {
+	background: var(--bg);
+	color: var(--text);
+}
+
+/* Utility for surfaces */
+.surface {
+	background: var(--surface);
+	color: var(--text);
+	border-color: var(--border);
+}
+
+/* Make Tailwind's `dark:` utilities work off the .dark class on the root */
+:root.dark, .dark {
+	color-scheme: dark;
+}
+
+/* Override common Tailwind utility classes in dark mode so existing markup switches
+	 appearance without changing every component. Uses !important to ensure overrides
+	 take effect over compiled Tailwind rules. */
+.dark header[role="navigation"] {
+	background: linear-gradient(to bottom, rgba(7,16,38,0.9), rgba(7,16,38,0.75));
+	border-bottom-color: var(--border) !important;
+}
+
+.dark .bg-white { background-color: var(--surface) !important; }
+.dark .bg-slate-50, .dark .bg-slate-100 { background-color: rgba(255,255,255,0.03) !important; }
+.dark .bg-slate-900 { background-color: #071026 !important; }
+
+.dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 { color: var(--text) !important; }
+.dark .text-slate-600, .dark .text-slate-500 { color: var(--muted) !important; }
+.dark .text-white { color: #fff !important; }
+
+.dark .border-slate-200, .dark .border-slate-300, .dark .ring-slate-200, .dark .ring-slate-300 {
+	border-color: var(--border) !important;
+}
+
+/* Hover utility overrides (Tailwind generates classes with colons, escape them here) */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-200:hover { background-color: rgba(255,255,255,0.04) !important; }
+
+/* Table / row hover in admin pages */
+.dark tr.hover\:bg-slate-50\/60:hover { background-color: rgba(255,255,255,0.03) !important; }
+
+/* Make elements using .surface match dark surface */
+.dark .surface { background: var(--surface) !important; color: var(--text) !important; }
+
+/* More comprehensive overrides to catch frequent Tailwind utilities */
+.dark .bg-white,
+.dark .bg-white\/80,
+.dark .bg-white\/20,
+.dark .bg-white\/95,
+.dark .bg-white\/70 {
+	background-color: var(--surface) !important;
+	color: var(--text) !important;
+}
+
+.dark .bg-white\/20 { background-color: rgba(255,255,255,0.03) !important; }
+.dark .bg-white\/80 { background-color: rgba(255,255,255,0.04) !important; }
+
+.dark .bg-slate-50,
+.dark .bg-slate-100 { background-color: rgba(255,255,255,0.03) !important; }
+
+/* Text color overrides */
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 { color: var(--text) !important; }
+.dark .text-slate-600,
+.dark .text-slate-500 { color: var(--muted) !important; }
+
+/* Make primary/sky link colors align with theme in dark mode */
+.dark .text-sky-700,
+.dark .text-sky-600,
+.dark .text-sky-500 { color: var(--primary) !important; }
+
+/* Ensure elements that force black text are corrected in dark mode */
+.dark .\!text-black { color: var(--text) !important; }
+
+/* Ensure form inputs and small surfaces adopt border / text colors */
+.dark input,
+.dark textarea,
+.dark select {
+	background: var(--surface) !important;
+	color: var(--text) !important;
+	border-color: var(--border) !important;
+}
+
+/* Buttons that use white background with ring/border */
+.dark .rounded-2xl.bg-white,
+.dark .rounded-xl.bg-white { background: var(--surface) !important; }

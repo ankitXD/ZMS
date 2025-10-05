@@ -16,14 +16,14 @@ const WhyVisitUs = () => {
 
             <div className="bg-gray-100 rounded-xl p-6 shadow-md">
             <h3 className="text-xl font-semibold text-green-900 mb-2">&#128047; Immersive Habitats</h3>
-            <p className="text-slate-700 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed !text-black">
             Step into Zoo Verse and explore habitats crafted to mirror the wild lush, interactive, and alive with detail.
             </p>
           </div>
 
           <div className="bg-gray-100 rounded-xl p-6 shadow-md">
             <h3 className="text-xl font-semibold text-green-900 mb-2">&#127811; Keeper Talks & Wildlife Moments</h3>
-            <p className="text-slate-700 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed !text-black">
             Engaging keeper talks, and unforgettable close-ups with wildlife from around the world
             </p>
          </div>
@@ -31,7 +31,7 @@ const WhyVisitUs = () => {
 
   <div className="bg-gray-100 rounded-xl p-6 shadow-md">
     <h3 className="text-xl font-semibold text-green-900 mb-2">&#127758; Conservation & Connection</h3>
-    <p className="text-slate-700 leading-relaxed">
+    <p className="text-slate-700 leading-relaxed !text-black">
       We focus on animal welfare and conservation, creating experiences that entertain, educate, and inspire a deeper connection to nature for visitors of all ages.
     </p>
   </div>

@@ -28,19 +28,19 @@ const WantToBookTickets = () => {
               wildlife and conservation.
             </p>
             <ul className="mt-5 space-y-3 text-slate-700">
-        <li className="flex items-start gap-3 bg-white/80 rounded-full px-4 py-3 shadow-sm">
+        <li className="flex items-start gap-3 bg-white/80 rounded-full px-4 py-3 shadow-sm !text-black">
             <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">
             ✓
             </span>
             <span>Secure timed entry to avoid queues</span>
         </li>
-        <li className="flex items-start gap-3 bg-white/80 rounded-full px-4 py-3 shadow-sm">
+        <li className="flex items-start gap-3 bg-white/80 rounded-full px-4 py-3 shadow-sm !text-black">
         <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">
             ✓
            </span>
        <span>Family-friendly pricing and senior discounts</span>
        </li>
-       <li className="flex items-start gap-3 bg-white/80 rounded-full px-4 py-3 shadow-sm">
+       <li className="flex items-start gap-3 bg-white/80 rounded-full px-4 py-3 shadow-sm !text-black">
        <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">
             ✓
          </span>

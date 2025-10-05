@@ -21,13 +21,13 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-4 sm:px-6">
-        <div className="max-w-2xl text-white">
+        <div className="max-w-2xl" style={{ color: 'var(--text)' }}>
           <h1 className="main-heading text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
-            Welcome to <span className="font-semibold text-green-300">Zoo Verse</span> 
+            Welcome to <span className="font-semibold" style={{ color: 'var(--primary)' }}>Zoo Verse</span>
           </h1>
-          <p className="mt-4 text-base sm:text-lg md:text-xl text-white/90 leading-relaxed">
-         Discover a world of wonder where conservation meets curiosity. At <span className="font-semibold text-green-300">Zoo Verse</span>, we care for diverse species, craft immersive habitats, and create unforgettable experiences that inspire a deeper connection with wildlife and our planet.
-         </p>
+          <p className="mt-4 text-base sm:text-lg md:text-xl leading-relaxed" style={{ color: 'rgba(230,238,245,0.95)' }}>
+            Discover a world of wonder where conservation meets curiosity. At <span className="font-semibold" style={{ color: 'var(--primary)' }}>Zoo Verse</span>, we care for diverse species, craft immersive habitats, and create unforgettable experiences that inspire a deeper connection with wildlife and our planet.
+          </p>
         </div>
       </div>
     </section>
