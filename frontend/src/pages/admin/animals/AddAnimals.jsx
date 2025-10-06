@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAnimalStore } from "../../../store/useAnimalStore";
+import CATEGORIES from "../../../constants/categories";
 import toast from "react-hot-toast";
 
 const AddAnimals = () => {
@@ -144,13 +145,18 @@ const AddAnimals = () => {
               >
                 Category (optional)
               </label>
-              <input
+              <select
                 id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                placeholder="e.g., Mammal"
-              />
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="sm:col-span-2">

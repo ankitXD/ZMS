@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAnimalStore } from "../store/useAnimalStore.js";
+import CATEGORIES from "../constants/categories";
 
 const AnimalDetail = () => {
   const { id } = useParams();
@@ -70,6 +71,9 @@ const AnimalDetail = () => {
 
   const { name, imageUrl, description, title, category } = animal;
 
+  const categoryLabel =
+    CATEGORIES.find((c) => c.value === category)?.label || category || "";
+
   return (
     <section className="relative" aria-label={`${name} details`}>
       <div
@@ -101,7 +105,7 @@ const AnimalDetail = () => {
               </h1>
               {(title || category) && (
                 <p className="mt-1 text-sm text-slate-600">
-                  {(title || category) ?? ""}
+                  {(title || category) ?? categoryLabel}
                 </p>
               )}
               <p className="mt-4 text-slate-700">

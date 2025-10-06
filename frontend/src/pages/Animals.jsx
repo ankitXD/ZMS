@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAnimalStore } from "../store/useAnimalStore.js";
 import AnimalCard from "../components/AnimalCard.jsx";
+import CATEGORIES from "../constants/categories";
 
 const Animals = () => {
   const [params, setParams] = useSearchParams();
@@ -20,13 +21,8 @@ const Animals = () => {
     fetchAnimalById,
   } = useAnimalStore();
 
-  // Category options
-  const categories = [
-    { value: "", label: "All Animals", emoji: "🌍" },
-    { value: "mammal", label: "Mammals", emoji: "🦁" },
-    { value: "aquatic", label: "Aquatic", emoji: "🐬" },
-    { value: "bird", label: "Birds", emoji: "🦅" },
-  ];
+  // Category options (centralized)
+  const categories = CATEGORIES;
 
   useEffect(() => {
     fetchAnimals({
