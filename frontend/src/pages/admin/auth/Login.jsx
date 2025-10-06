@@ -28,11 +28,14 @@ const Login = () => {
   const displayError = error || loginError;
 
   return (
-    <main className="min-h-screen grid place-items-center bg-gradient-to-b from-slate-50 to-white px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+    <main
+      className="min-h-screen grid place-items-center px-4 py-10"
+      style={{ background: "linear-gradient(to bottom, var(--bg), var(--surface))" }}
+    >
+      <div className="w-full max-w-md rounded-2xl surface p-6 shadow-sm ring-1" style={{ borderColor: 'var(--border)' }}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Admin Login</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>Admin Login</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
             Sign in to manage Zoo Verse
           </p>
         </div>
@@ -45,19 +48,20 @@ const Login = () => {
           )}
 
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Email</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>Email</span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@zooverse.com"
               required
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="mt-1 w-full rounded-lg border px-3 py-2 text-sm placeholder-slate-400 focus:outline-none"
+              style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
             />
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Password</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>Password</span>
             <div className="mt-1 flex items-center rounded-lg border border-slate-300 focus-within:ring-2 focus-within:ring-emerald-500">
               <input
                 type={show ? "text" : "password"}
@@ -65,12 +69,14 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full rounded-l-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
+                className="w-full rounded-l-lg px-3 py-2 text-sm placeholder-slate-400 focus:outline-none"
+                style={{ color: 'var(--text)' }}
               />
               <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
-                className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800"
+                className="px-3 py-2 text-sm"
+                style={{ color: 'var(--muted)' }}
                 aria-label={show ? "Hide password" : "Show password"}
               >
                 {show ? "Hide" : "Show"}
@@ -79,10 +85,11 @@ const Login = () => {
           </label>
 
           <div className="flex items-center justify-between">
-            <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+            <label className="inline-flex items-center gap-2 text-sm" style={{ color: 'var(--muted)' }}>
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                className="h-4 w-4 rounded"
+                style={{ borderColor: 'var(--border)' }}
               />
               Remember me
             </label>
@@ -110,10 +117,7 @@ const Login = () => {
 
       {/* Added button */}
       <div className="mt-6 w-full max-w-md text-center">
-        <Link
-          to="/"
-          className="text-sm font-medium text-slate-600 hover:text-slate-800 underline"
-        >
+        <Link to="/" className="text-sm font-medium underline" style={{ color: 'var(--muted)' }}>
           ← Back to Home Page
         </Link>
       </div>
