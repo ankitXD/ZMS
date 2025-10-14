@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import AnimalCard from "../components/AnimalCard";
 import { useAnimalStore } from "../store/useAnimalStore.js";
 import { Link, useNavigate } from "react-router-dom";
+import CATEGORIES from "../constants/categories";
 
 const AnimalsCatalogue = () => {
   const { animals, listLoading, listError, fetchAnimals, fetchAnimalById } =
