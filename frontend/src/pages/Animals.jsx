@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAnimalStore } from "../store/useAnimalStore.js";
 import AnimalCard from "../components/AnimalCard.jsx";
+import CATEGORIES from "../constants/categories";
 
 const Animals = () => {
   const [params, setParams] = useSearchParams();
@@ -17,8 +18,11 @@ const Animals = () => {
     listLoading,
     listError,
     fetchAnimals,
-    fetchAnimalById, // <- use for prefetch on click
+    fetchAnimalById,
   } = useAnimalStore();
+
+  // Category options (centralized)
+  const categories = CATEGORIES;
 
   useEffect(() => {
     fetchAnimals({
@@ -37,12 +41,22 @@ const Animals = () => {
   };
 
   const handleOpenAnimal = async (id) => {
-    // Prefetch details, then navigate
     try {
       await fetchAnimalById(id);
     } finally {
       navigate(`/animals/${id}`);
     }
+  };
+
+  const handleCategoryChange = (categoryValue) => {
+    const next = new URLSearchParams(params);
+    if (categoryValue) {
+      next.set("category", categoryValue);
+    } else {
+      next.delete("category");
+    }
+    next.set("page", "1");
+    setParams(next);
   };
 
   return (
@@ -76,12 +90,52 @@ const Animals = () => {
         </form>
       </header>
 
+      {/* Category Filter Buttons */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {categories.map((cat) => (
+          <button
+            key={cat.value}
+            onClick={() => handleCategoryChange(cat.value)}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+              category === cat.value
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-white text-slate-700 border border-slate-300 hover:border-emerald-500 hover:text-emerald-600"
+            }`}
+          >
+            <span className="mr-1.5">{cat.emoji}</span>
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Results counter */}
+      {!listLoading && !listError && (
+        <div className="mb-4 text-sm text-slate-600">
+          {category ? (
+            <span>
+              Showing {pagination.total} {category}{" "}
+              {pagination.total === 1 ? "animal" : "animals"}
+            </span>
+          ) : (
+            <span>Showing all {pagination.total} animals</span>
+          )}
+        </div>
+      )}
+
       {listLoading ? (
         <p className="text-slate-600">Loading animals…</p>
       ) : listError ? (
         <p className="text-red-600">Failed to load: {listError}</p>
       ) : animals.length === 0 ? (
-        <p className="text-slate-600">No animals found.</p>
+        <div className="text-center py-12">
+          <div className="text-5xl mb-3">🔍</div>
+          <p className="text-slate-600 font-medium">No animals found</p>
+          {(q || category) && (
+            <p className="text-slate-500 text-sm mt-1">
+              Try adjusting your search or filter
+            </p>
+          )}
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
