@@ -1,159 +1,56 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
+import {
+  LayoutDashboard,
+  PawPrint,
+  MessageSquare,
+  ShoppingCart,
+  CreditCard,
+  BarChart3,
+  Settings,
+  Users,
+} from "lucide-react";
 
 const navItems = [
   {
     to: "/admin/dashboard",
     label: "Dashboard",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 12h7V3H3v9Zm0 9h7v-7H3v7Zm11 0h7v-9h-7v9Zm0-11h7V3h-7v7Z"
-        />
-      </svg>
-    ),
+    icon: <LayoutDashboard className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/animals",
     label: "Animals",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M4 5h16M4 12h16M4 19h16"
-        />
-      </svg>
-    ),
+    icon: <PawPrint className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/messages",
     label: "Messages",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M7 8h10M7 12h7m6 8-4-4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v9"
-        />
-      </svg>
-    ),
+    icon: <MessageSquare className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/orders",
     label: "Orders",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 7h18M6 7v14h12V7m-6 4v7M6 7l2-4h8l2 4"
-        />
-      </svg>
-    ),
+    icon: <ShoppingCart className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/payments",
     label: "Payments",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 8h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Zm0 0l2-3h14l2 3M7 13h5"
-        />
-      </svg>
-    ),
+    icon: <CreditCard className="h-4 w-4" />,
   },
-  // Reports
   {
     to: "/admin/dashboard/reports",
     label: "Reports",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M4 19h16M6 17V7m6 10V5m6 12v-8"
-        />
-      </svg>
-    ),
+    icon: <BarChart3 className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/settings",
     label: "Settings",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7.94-4.06a7.97 7.97 0 0 0-.16-1.38l2.22-1.73-2-3.46-2.7 1.09a7.97 7.97 0 0 0-2.4-1.38L14.5 1h-5l-.4 2.58c-.86.29-1.68.7-2.4 1.38L3.6 3.87l-2 3.46 2.22 1.73c-.07.45-.12.9-.12 1.38s.05.93.12 1.38L1.6 13.66l2 3.46 3.1-1.27c.72.68 1.54 1.09 2.4 1.38l.4 2.77h5l.4-2.77c.86-.29 1.68-.7 2.4-1.38l3.1 1.27 2-3.46-2.22-1.73c.07-.45.12-.9.12-1.38Z"
-        />
-      </svg>
-    ),
+    icon: <Settings className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/admins",
     label: "Admins",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM12 14c-4 0-7 2-7 4v3h14v-3c0-2-3-4-7-4Z"
-        />
-      </svg>
-    ),
+    icon: <Users className="h-4 w-4" />,
   },
 ];
 

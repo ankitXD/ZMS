@@ -3,7 +3,9 @@ import { Animal } from "../models/animal.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import uploadOnCloudinary, {
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 
 // Create
 export const createAnimal = asyncHandler(async (req, res) => {
@@ -152,8 +154,28 @@ export const deleteAnimal = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid animal id");
   }
 
-  const deleted = await Animal.findByIdAndDelete(id);
-  if (!deleted) throw new ApiError(404, "Animal not found");
+  const animal = await Animal.findById(id);
+  if (!animal) throw new ApiError(404, "Animal not found");
+
+  // Extract Cloudinary public_id from imageUrl if it exists
+  if (animal.imageUrl) {
+    try {
+      const urlParts = animal.imageUrl.split("/");
+      // Cloudinary URL format: .../upload/v123456/folder/publicId.ext
+      const uploadIndex = urlParts.indexOf("upload");
+      if (uploadIndex !== -1 && urlParts.length > uploadIndex + 2) {
+        // Get everything after version (v123456), join and remove extension
+        const pathAfterVersion = urlParts.slice(uploadIndex + 2).join("/");
+        const publicId = pathAfterVersion.replace(/\.[^/.]+$/, ""); // remove extension
+        await deleteFromCloudinary(publicId);
+      }
+    } catch (error) {
+      console.error("Failed to delete image from Cloudinary:", error.message);
+      // Continue with animal deletion even if Cloudinary delete fails
+    }
+  }
+
+  await Animal.findByIdAndDelete(id);
 
   return res
     .status(200)
