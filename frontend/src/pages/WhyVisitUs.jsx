@@ -8,7 +8,7 @@ const WhyVisitUs = () => {
           {/* Left: Text */}
           <div>
             <h2
-              className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 text-transparent
+              className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900
               bg-clip-text bg-gradient-to-r from-blue-900 via-green-800 to-blue-800"
             >
               Why Visit Us...
