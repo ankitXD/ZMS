@@ -8,6 +8,7 @@ import {
   CreditCard,
   BarChart3,
   Settings,
+  Video,
   Users,
 } from "lucide-react";
 
@@ -21,6 +22,11 @@ const navItems = [
     to: "/admin/dashboard/animals",
     label: "Animals",
     icon: <PawPrint className="h-4 w-4" />,
+  },
+  {
+    to: "/admin/dashboard/reels",
+    label: "Reels",
+    icon: <Video className="h-4 w-4" />,
   },
   {
     to: "/admin/dashboard/messages",

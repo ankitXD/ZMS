@@ -25,6 +25,9 @@ import Payments from "../src/pages/admin/payments/Payments";
 import ViewReports from "../src/pages/admin/reports/ViewReports";
 import Settings from "../src/pages/admin/settings/Settings";
 import Custom404 from "./components/Custom404.jsx";
+import ViewReels from "./pages/admin/reels/ViewReels.jsx";
+import AddReels from "./pages/admin/reels/AddReels.jsx";
+import EditReels from "./pages/admin/reels/EditReels.jsx";
 
 // Auth loader (circle animation)
 const AuthLoader = () => (
@@ -112,6 +115,9 @@ function App() {
           <Route path="animals" element={<ViewAnimals />} />
           <Route path="add/animals" element={<AddAnimals />} />
           <Route path="animals/:id/edit" element={<EditAnimals />} />
+          <Route path="reels" element={<ViewReels />} />
+          <Route path="add/reels" element={<AddReels />} />
+          <Route path="reels/:id/edit" element={<EditReels />} />
           <Route path="admins" element={<Admins />} />
           <Route path="messages" element={<ViewMessages />} />
           <Route path="orders" element={<Orders />} />

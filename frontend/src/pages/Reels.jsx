@@ -4,63 +4,14 @@ import {
   Pause,
   Volume2,
   VolumeX,
-  Heart,
-  MessageCircle,
-  Share2,
   X,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-// Reels data structure - Animal Zoo Moments
-const reelsData = [
-  {
-    id: 1,
-    videoUrl: "https://res.cloudinary.com/demo/video/upload/sample.mp4", // Replace with actual zoo animal videos
-    thumbnail: "/placeholder.png",
-    title: "Lion Feeding Time",
-    description:
-      "Watch our majestic lions enjoy their daily meal in the savanna habitat",
-    likes: 2845,
-    comments: 128,
-  },
-  {
-    id: 2,
-    videoUrl: "https://res.cloudinary.com/demo/video/upload/sample.mp4",
-    thumbnail: "/placeholder.png",
-    title: "Elephant Bath Routine",
-    description: "Our gentle giants love their morning bath and playtime",
-    likes: 3912,
-    comments: 245,
-  },
-  {
-    id: 3,
-    videoUrl: "https://res.cloudinary.com/demo/video/upload/sample.mp4",
-    thumbnail: "/placeholder.png",
-    title: "Penguin Parade",
-    description: "Daily waddle parade of our adorable penguin colony",
-    likes: 5234,
-    comments: 189,
-  },
-  {
-    id: 4,
-    videoUrl: "https://res.cloudinary.com/demo/video/upload/sample.mp4",
-    thumbnail: "/placeholder.png",
-    title: "Monkey Playtime",
-    description:
-      "Energetic monkeys swinging and playing in their natural habitat",
-    likes: 4156,
-    comments: 167,
-  },
-];
+import { useReelStore } from "../store/useReelStore.js";
 
 const ReelCard = ({ reel, onClick }) => {
-  const [isLiked, setIsLiked] = useState(false);
   const videoRef = useRef(null);
-
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
-  };
 
   useEffect(() => {
     // Autoplay video muted on mount
@@ -112,35 +63,6 @@ const ReelCard = ({ reel, onClick }) => {
           <h3 className="text-white text-base font-bold drop-shadow-lg line-clamp-2">
             {reel.title}
           </h3>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-white/90 text-xs">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleLike();
-                }}
-                className="flex items-center gap-1 hover:text-red-400 transition-colors"
-              >
-                <Heart
-                  className={`w-4 h-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
-                />
-                <span>
-                  {(isLiked ? reel.likes + 1 : reel.likes).toLocaleString()}
-                </span>
-              </button>
-              <span className="flex items-center gap-1">
-                <MessageCircle className="w-4 h-4" />
-                {reel.comments}
-              </span>
-            </div>
-            <button
-              onClick={(e) => e.stopPropagation()}
-              className="text-white/90 hover:text-white transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -151,7 +73,6 @@ const ReelCard = ({ reel, onClick }) => {
 const ReelModal = ({ reel, onClose, onNext, onPrev, hasNext, hasPrev }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
   const videoRef = useRef(null);
 
   const toggleMute = () => {
@@ -172,10 +93,6 @@ const ReelModal = ({ reel, onClose, onNext, onPrev, hasNext, hasPrev }) => {
       vid.play();
       setIsPlaying(true);
     }
-  };
-
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
   };
 
   useEffect(() => {
@@ -301,29 +218,6 @@ const ReelModal = ({ reel, onClose, onNext, onPrev, hasNext, hasPrev }) => {
             <p className="text-white/90 text-sm drop-shadow-lg">
               {reel.description}
             </p>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-white/90">
-                <button
-                  onClick={toggleLike}
-                  className="flex items-center gap-2 hover:text-red-400 transition-colors"
-                >
-                  <Heart
-                    className={`w-6 h-6 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
-                  />
-                  <span className="text-base">
-                    {(isLiked ? reel.likes + 1 : reel.likes).toLocaleString()}
-                  </span>
-                </button>
-                <span className="flex items-center gap-2">
-                  <MessageCircle className="w-6 h-6" />
-                  <span className="text-base">{reel.comments}</span>
-                </span>
-              </div>
-              <button className="text-white/90 hover:text-white transition-colors">
-                <Share2 className="w-6 h-6" />
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -333,6 +227,11 @@ const ReelModal = ({ reel, onClose, onNext, onPrev, hasNext, hasPrev }) => {
 
 const Reels = () => {
   const [selectedReelIndex, setSelectedReelIndex] = useState(null);
+  const { reels, listLoading, listError, fetchReels } = useReelStore();
+
+  useEffect(() => {
+    fetchReels({ limit: 100, sort: "-createdAt" });
+  }, [fetchReels]);
 
   const openModal = (index) => {
     setSelectedReelIndex(index);
@@ -343,7 +242,7 @@ const Reels = () => {
   };
 
   const goToNext = () => {
-    if (selectedReelIndex < reelsData.length - 1) {
+    if (selectedReelIndex < reels.length - 1) {
       setSelectedReelIndex(selectedReelIndex + 1);
     }
   };
@@ -369,27 +268,37 @@ const Reels = () => {
         </div>
       </div>
 
-      {/* Reels Container - Responsive grid that fits on screen */}
+      {/* Reels Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[auto] items-stretch justify-items-center">
-          {reelsData.map((reel, index) => (
-            <ReelCard
-              key={reel.id}
-              reel={reel}
-              onClick={() => openModal(index)}
-            />
-          ))}
-        </div>
+        {listLoading ? (
+          <p className="text-center text-slate-600">Loading reels…</p>
+        ) : listError ? (
+          <p className="text-center text-red-600">
+            Failed to load: {listError}
+          </p>
+        ) : reels.length === 0 ? (
+          <p className="text-center text-slate-600">No reels available yet.</p>
+        ) : (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[auto] items-stretch justify-items-center">
+            {reels.map((reel, index) => (
+              <ReelCard
+                key={reel._id}
+                reel={reel}
+                onClick={() => openModal(index)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal */}
-      {selectedReelIndex !== null && (
+      {selectedReelIndex !== null && reels[selectedReelIndex] && (
         <ReelModal
-          reel={reelsData[selectedReelIndex]}
+          reel={reels[selectedReelIndex]}
           onClose={closeModal}
           onNext={goToNext}
           onPrev={goToPrev}
-          hasNext={selectedReelIndex < reelsData.length - 1}
+          hasNext={selectedReelIndex < reels.length - 1}
           hasPrev={selectedReelIndex > 0}
         />
       )}

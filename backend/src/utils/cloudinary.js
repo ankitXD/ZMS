@@ -22,20 +22,32 @@ const uploadOnCloudinary = async (filePath) => {
   let response;
   try {
     if (!filePath) throw new Error("No file path provided to upload");
-    // Log the file path to ensure it exists
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found at path: ${filePath}`);
+    }
+
+    console.log(`Uploading file to Cloudinary: ${filePath}`);
+
+    // Detect resource type from file extension
+    const fileExt = filePath.split(".").pop().toLowerCase();
+    const isVideo = ["mp4", "webm", "mov", "avi", "mkv"].includes(fileExt);
 
     response = await cloudinary.uploader.upload(filePath, {
-      folder: "user_avatars", // You can specify a folder name
+      folder: isVideo ? "zoo_reels" : "user_avatars",
+      resource_type: isVideo ? "video" : "image",
     });
 
     if (!response || !response.url) {
       throw new Error("Cloudinary upload did not return a URL");
     }
 
+    console.log(`Successfully uploaded to Cloudinary: ${response.url}`);
     return response;
   } catch (error) {
-    console.error("Error uploading file to Cloudinary:", error.message);
-    throw new Error("Failed to upload file to Cloudinary");
+    console.error("Error uploading file to Cloudinary:", error);
+    throw new Error(error.message || "Failed to upload file to Cloudinary");
   } finally {
     // Always attempt to clean up local temp file, but don't throw if missing
     safeUnlink(filePath);
