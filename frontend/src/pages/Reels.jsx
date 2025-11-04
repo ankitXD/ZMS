@@ -49,9 +49,10 @@ const ReelCard = ({ reel, onClick }) => {
         src={reel.videoUrl}
         className="absolute inset-0 w-full h-full object-cover"
         playsInline
-        preload="auto"
+        preload="metadata"
         loop
         muted
+        autoPlay
       />
 
       {/* Dark overlay for better text readability */}
@@ -203,6 +204,7 @@ const ReelModal = ({ reel, onClose, onNext, onPrev, hasNext, hasPrev }) => {
           className="w-full h-full object-contain rounded-lg"
           playsInline
           loop
+          muted={isMuted}
           controls={false}
         />
 
