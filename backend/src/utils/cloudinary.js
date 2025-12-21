@@ -37,13 +37,17 @@ const uploadOnCloudinary = async (filePath) => {
     response = await cloudinary.uploader.upload(filePath, {
       folder: isVideo ? "zoo_reels" : "user_avatars",
       resource_type: isVideo ? "video" : "image",
+      secure: true, // Ensure HTTPS URLs are returned
     });
 
-    if (!response || !response.url) {
+    if (!response || !response.secure_url) {
       throw new Error("Cloudinary upload did not return a URL");
     }
 
-    console.log(`Successfully uploaded to Cloudinary: ${response.url}`);
+    // Always use secure_url (HTTPS) instead of url (HTTP) to avoid mixed content warnings
+    response.url = response.secure_url;
+
+    console.log(`Successfully uploaded to Cloudinary: ${response.secure_url}`);
     return response;
   } catch (error) {
     console.error("Error uploading file to Cloudinary:", error);
