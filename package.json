@@ -1,0 +1,13 @@
+{
+  "name": "zms",
+  "version": "1.0.0",
+  "description": "Zoo Management System",
+  "scripts": {
+    "start": "npm start --prefix backend",
+    "install": "npm install --prefix backend",
+    "dev": "npm run dev --prefix backend"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
